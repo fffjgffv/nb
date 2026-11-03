@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>塔罗牌占卜 · 流星指引</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+    html, body {
+        min-height: 100vh;
+        background: #0a0f14;
+        color: #c8d6e5;
+        overflow-x: hidden;
+    }
+
+    /* ---------- 流星背景 ---------- */
+    #meteors {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 0;
+    }
+    .meteor {
+        position: absolute;
+        background: #20c997;
+        border-radius: 50%;
+        box-shadow: 0 0 8px 2px rgba(32, 201, 151, 0.7);
+        opacity: 0;
+        animation: meteorFall linear forwards;
+    }
+    .meteor::after {
+        content: '';
+        position: absolute;
+        top: 50%; left: 50%;
+        width: 80px;
+        height: 1.5px;
+        background: linear-gradient(to right, rgba(32,201,151,0.9), rgba(32,201,151,0));
+        transform-origin: left center;
+        transform: rotate(-45deg);
+        border-radius: 2px;
+    }
+    @keyframes meteorFall {
+        0%   { transform: translate(0, 0); opacity: 0; }
+        10%  { opacity: 1; }
+        88%  { opacity: 0.8; }
+        100% { transform: translate(-720px, 720px); opacity: 0; }
+    }
+
+    /* ---------- 主容器 ---------- */
+    .app {
+        position: relative;
+        z-index: 1;
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 30px 20px 60px;
+    }
+    h1 {
+        text-align: center;
+        font-weight: 300;
+        letter-spacing: 10px;
+        color: #20c997;
+        font-size: 1.9rem;
+        margin-bottom: 6px;
+        text-shadow: 0 0 22px rgba(32,201,151,0.35);
+    }
+    .sub {
+        text-align: center;
+        color: #5a6c7e;
+        font-size: 0.82rem;
+        letter-spacing: 4px;
+        margin-bottom: 30px;
+    }
+
+    .panel {
+        background: rgba(17, 26, 34, 0.9);
+        backdrop-filter: blur(6px);
+        border: 1px solid #1d2b36;
+        border-radius: 14px;
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.45);
+    }
+
+    /* ---------- 设置区 ---------- */
+    .step {
+        color: #20c997;
+        font-size: 0.92rem;
+        margin: 16px 0 10px;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+    }
+    .step:first-child { margin-top: 0; }
+    .step .num {
+        display: inline-block;
+        width: 22px; height: 22px;
+        line-height: 22px;
+        text-align: center;
+        border-radius: 50%;
+        background: #20c997;
+        color: #0a0f14;
+        font-size: 0.76rem;
+        font-weight: 700;
+        margin-right: 9px;
+        flex-shrink: 0;
+    }
+    textarea, input[type="number"] {
+        width: 100%;
+        background: #0d161e;
+        border: 1px solid #1d2b36;
+        color: #c8d6e5;
+        padding: 12px 14px;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        outline: none;
+        resize: vertical;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    textarea { min-height: 60px; }
+    textarea:focus, input:focus {
+        border-color: #20c997;
+        box-shadow: 0 0 0 3px rgba(32,201,151,0.12);
+    }
+    textarea::placeholder, input::placeholder { color: #3a4a5a; }
+
+    /* ---------- 按钮 ---------- */
+    .btn {
+        background: #20c997;
+        color: #0a0f14;
+        border: none;
+        padding: 15px 36px;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        letter-spacing: 8px;
+        transition: all 0.25s;
+        box-shadow: 0 0 20px rgba(32,201,151,0.3);
+        width: 100%;
+        margin-top: 24px;
+    }
+    .btn:hover {
+        background: #1ab385;
+        box-shadow: 0 0 32px rgba(32,201,151,0.55);
+        transform: translateY(-2px);
+    }
+    .btn:active { transform: translateY(1px) scale(0.99); }
+    .btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+    }
+    .btn-sm {
+        padding: 11px 22px;
+        font-size: 0.88rem;
+        letter-spacing: 3px;
+        width: auto;
+        margin-top: 0;
+    }
+    .btn-ghost {
+        background: #16222c;
+        color: #7a8c9e;
+        border: 1px solid #1d2b36;
+        box-shadow: none;
+    }
+    .btn-ghost:hover {
+        background: #1d2b36;
+        color: #c8d6e5;
+        box-shadow: none;
+    }
+    .row {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 22px;
+        flex-wrap: wrap;
+    }
+
+    /* ---------- 牌桌 ---------- */
+    .pick-title {
+        text-align: center;
+        color: #20c997;
+        font-size: 0.95rem;
+        letter-spacing: 3px;
+        margin-bottom: 22px;
+        font-weight: 500;
+    }
+    .pick-title .count {
+        color: #e6a23c;
+        font-weight: 700;
+    }
+    .card-table {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        max-width: 430px;
+        margin: 0 auto;
+    }
+
+    .flip-card {
+        aspect-ratio: 2 / 3;
+        perspective: 900px;
+        cursor: pointer;
+        animation: cardEnter 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        transition: filter 0.25s;
+    }
+    @keyframes cardEnter {
+        from { opacity: 0; transform: translateY(40px) scale(0.85); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .flip-card:not(.flipped):hover {
+        filter: drop-shadow(0 0 16px rgba(32,201,151,0.65));
+    }
+    .flip-card.flipped {
+        filter: drop-shadow(0 0 14px rgba(32,201,151,0.55));
+    }
+    .flip-inner {
+        position: relative;
+        width: 100%; height: 100%;
+        transform-style: preserve-3d;
+        transition: transform 0.75s cubic-bezier(0.4, 0.2, 0.2, 1);
+    }
+    .flip-card.flipped .flip-inner {
+        transform: rotateY(180deg);
+    }
+    .face {
+        position: absolute;
+        inset: 0;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    .back-face {
+        background: radial-gradient(circle at 50% 40%, #16333f 0%, #0c1a22 72%);
+        border: 2px solid #20c997;
+        box-shadow: inset 0 0 22px rgba(32,201,151,0.14);
+    }
+    .back-face::before {
+        content: '✦';
+        font-size: 1.7rem;
+        color: #20c997;
+        opacity: 0.9;
+        text-shadow: 0 0 14px rgba(32,201,151,0.9);
+    }
+    .back-face::after {
+        content: '';
+        position: absolute;
+        inset: 7px;
+        border: 1px solid rgba(32,201,151,0.28);
+        border-radius: 6px;
+        pointer-events: none;
+    }
+    .front-face {
+        transform: rotateY(180deg);
+        background: linear-gradient(150deg, #14242e 0%, #0b161d 100%);
+        border: 2px solid #20c997;
+        padding: 10px 6px;
+        text-align: center;
+        box-shadow: 0 0 22px rgba(32,201,151,0.3);
+    }
+    .front-face.reversed {
+        border-color: #e6a23c;
+        box-shadow: 0 0 22px rgba(230,162,60,0.3);
+    }
+    .fc-symbol {
+        font-size: 1.7rem;
+        line-height: 1;
+        margin-bottom: 8px;
+        transition: transform 0.4s;
+    }
+    .front-face.reversed .fc-symbol { transform: rotate(180deg); }
+    .fc-name {
+        font-size: 0.74rem;
+        font-weight: 600;
+        color: #c8d6e5;
+        line-height: 1.3;
+        margin-bottom: 6px;
+        padding: 0 2px;
+    }
+    .fc-ori {
+        font-size: 0.6rem;
+        padding: 1px 8px;
+        border-radius: 10px;
+        letter-spacing: 1px;
+    }
+    .fc-ori.up { color: #20c997; border: 1px solid rgba(32,201,151,0.5); }
+    .fc-ori.rev { color: #e6a23c; border: 1px solid rgba(230,162,60,0.5); }
+
+    /* ---------- 结果区 ---------- */
+    .spread {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+    }
+    .card-slot {
+        animation: fadeUp 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+    .card-slot:nth-child(1) { animation-delay: 0.05s; }
+    .card-slot:nth-child(2) { animation-delay: 0.2s; }
+    .card-slot:nth-child(3) { animation-delay: 0.35s; }
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(24px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .card {
+        width: 148px;
+        height: 232px;
+        background: linear-gradient(150deg, #14242e 0%, #0b161d 100%);
+        border: 2px solid #20c997;
+        border-radius: 12px;
+        box-shadow: 0 0 24px rgba(32,201,151,0.18);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 10px;
+        position: relative;
+    }
+    .card.reversed {
+        border-color: #e6a23c;
+        box-shadow: 0 0 24px rgba(230,162,60,0.2);
+    }
+    .card .card-pos {
+        position: absolute;
+        top: 10px;
+        font-size: 0.7rem;
+        color: #5a6c7e;
+        letter-spacing: 3px;
+    }
+    .card .card-symbol {
+        font-size: 3rem;
+        line-height: 1;
+        margin: 18px 0 12px;
+        transition: transform 0.4s;
+    }
+    .card.reversed .card-symbol { transform: rotate(180deg); }
+    .card .card-name {
+        font-size: 0.86rem;
+        font-weight: 600;
+        color: #c8d6e5;
+        text-align: center;
+        line-height: 1.4;
+        padding: 0 4px;
+    }
+    .card .card-ori {
+        margin-top: 10px;
+        font-size: 0.64rem;
+        padding: 1px 10px;
+        border-radius: 10px;
+        letter-spacing: 2px;
+    }
+    .card .card-ori.up { color: #20c997; border: 1px solid rgba(32,201,151,0.4); }
+    .card .card-ori.rev { color: #e6a23c; border: 1px solid rgba(230,162,60,0.4); }
+
+    /* ---------- 解读文字 ---------- */
+    .result-box {
+        background: #0d161e;
+        border: 1px solid #1d2b36;
+        border-radius: 10px;
+        padding: 20px;
+        line-height: 1.95;
+        font-size: 0.88rem;
+        color: #b0c4d8;
+    }
+    .section-title {
+        color: #20c997;
+        font-size: 0.92rem;
+        font-weight: 600;
+        margin: 20px 0 10px;
+        border-bottom: 1px dashed #1d2b36;
+        padding-bottom: 7px;
+        letter-spacing: 2px;
+    }
+    .section-title:first-child { margin-top: 0; }
+    .kv { margin: 6px 0; padding-left: 4px; }
+    .card-title { font-weight: 600; font-size: 0.9rem; }
+    .card-title.up { color: #20c997; }
+    .card-title.rev { color: #e6a23c; }
+    .highlight { color: #20c997; font-weight: 600; }
+    .warn { color: #e6a23c; }
+    .plain { color: #7a8c9e; font-size: 0.83rem; }
+    .divider { height: 1px; background: #1d2b36; margin: 14px 0; }
+
+    /* ---------- 补牌区 ---------- */
+    .clarify-area {
+        margin-top: 24px;
+        padding-top: 22px;
+        border-top: 1px dashed #1d2b36;
+    }
+    .clarify-title {
+        color: #20c997;
+        font-size: 0.9rem;
+        letter-spacing: 3px;
+        margin-bottom: 14px;
+        text-align: center;
+    }
+    .mini-card {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #13222c;
+        border: 1px solid #1d2b36;
+        border-radius: 8px;
+        padding: 9px 15px;
+        margin: 5px 7px 5px 0;
+        font-size: 0.82rem;
+    }
+    .mini-card.rev { border-color: rgba(230,162,60,0.4); }
+    .mini-card .msym { font-size: 1.15rem; }
+    .mini-card.rev .msym { display: inline-block; transform: rotate(180deg); }
+    .mini-card .mname { color: #c8d6e5; }
+    .mini-card .mori { color: #5a6c7e; font-size: 0.72rem; }
+
+    .footer-note {
+        text-align: center;
+        color: #3a4a5a;
+        font-size: 0.72rem;
+        margin-top: 26px;
+        letter-spacing: 2px;
+    }
+
+    @media (max-width: 520px) {
+        h1 { font-size: 1.4rem; letter-spacing: 6px; }
+        .app { padding: 22px 14px 50px; }
+        .panel { padding: 18px 14px; }
+        .btn { padding: 13px 24px; letter-spacing: 5px; }
+        .card-table { gap: 10px; max-width: 340px; }
+        .fc-name { font-size: 0.66rem; }
+        .fc-symbol { font-size: 1.4rem; }
+        .card { width: 118px; height: 188px; }
+        .card .card-symbol { font-size: 2.4rem; }
+        .card .card-name { font-size: 0.76rem; }
+        .spread { gap: 10px; }
+    }
+</style>
+</head>
+<body>
+<div id="meteors"></div>
+
+<div class="app">
+    <h1>塔罗牌占卜</h1>
+    <p class="sub">静心 · 感应 · 指引</p>
+
+    <!-- ============ 设置区 ============ -->
+    <div class="panel" id="setupPanel">
+        <div class="step"><span class="num">1</span>默念你想问的事情</div>
+        <textarea id="question" placeholder="（在心中默念即可，也可写下关键词，如：我和他的关系发展）"></textarea>
+
+        <div class="step"><span class="num">2</span>闭上眼睛，放空心灵，深呼吸三次</div>
+
+        <div class="step"><span class="num">3</span>报出你心中感应最深的数字（0 - 999）</div>
+        <input type="number" id="seedInput" min="0" max="999" placeholder="例如：368（不必执着，随心即可）">
+
+        <button class="btn" id="btnStart">洗 牌 · 开 始</button>
+    </div>
+
+    <!-- ============ 抽牌区 ============ -->
+    <div class="panel" id="pickPanel" style="display:none;">
+        <div class="pick-title" id="pickTitle">请点击三张牌 · 已选 <span class="count">0</span> / 3</div>
+        <div class="card-table" id="cardTable"></div>
+    </div>
+
+    <!-- ============ 结果区 ============ -->
+    <div class="panel" id="resultPanel" style="display:none;">
+        <div class="spread" id="spread"></div>
+        <div class="result-box" id="reading"></div>
+
+        <div class="clarify-area" id="clarifyArea" style="display:none;">
+            <div class="clarify-title">✦ 补充之牌 ✦</div>
+            <div id="clarifyCards"></div>
+            <div class="result-box" id="clarifyReading" style="margin-top:16px;"></div>
+        </div>
+
+        <div class="row">
+            <button class="btn btn-sm" id="btnClarify">补 牌</button>
+            <button class="btn btn-sm btn-ghost" id="btnReset">重新占卜</button>
+        </div>
+    </div>
+
+    <p class="footer-note">塔罗为镜，映照内心 · 命运始终握在你自己手中</p>
+</div>
+
+<script>
+/* ============================================================
+   塔罗牌数据 · 78 张
+============================================================ */
+const DECK = [
+/* ---------- 大阿卡纳 ---------- */
+{n:'愚者',e:'The Fool',a:'major',num:'0',s:'✦',k:'开始·冒险·纯真·自由',u:'新的开始，拥抱未知，保持纯真与好奇，勇敢迈出第一步。',r:'鲁莽行事，逃避责任，犹豫不决，或过于天真而受骗。',adv:'放下顾虑，但别丢掉判断力；第一步往往比想象中容易。'},
+{n:'魔术师',e:'The Magician',a:'major',num:'I',s:'✦',k:'创造·能力·意志·显化',u:'你拥有实现目标的能力与资源，专注意志即可显化。',r:'能力未发挥，或用于欺骗、操控，缺乏专注与行动力。',adv:'善用你的技能，一次专注一个方向，别把力气分散。'},
+{n:'女祭司',e:'The High Priestess',a:'major',num:'II',s:'✦',k:'直觉·神秘·潜意识·静默',u:'倾听内在直觉，答案在静默中浮现，隐藏的智慧正在显现。',r:'忽视直觉，被表象迷惑，秘密被压抑或不愿面对。',adv:'静下来，相信你的直觉；有些事不必急着要答案。'},
+{n:'皇后',e:'The Empress',a:'major',num:'III',s:'✦',k:'丰盛·滋养·母性·创造',u:'丰盛与滋养，创造力旺盛，关系温暖，享受生活的美好。',r:'过度依赖，创造力受阻，忽视自我照顾，付出失衡。',adv:'先滋养自己，才能更好地滋养你所爱的人事物。'},
+{n:'皇帝',e:'The Emperor',a:'major',num:'IV',s:'✦',k:'权威·秩序·结构·责任',u:'建立秩序与结构，承担责任，理性掌控局面。',r:'专制、固执、控制欲过强，或缺乏纪律与担当。',adv:'该立规矩时立规矩，但别让框架把自己也困住。'},
+{n:'教皇',e:'The Hierophant',a:'major',num:'V',s:'✦',k:'传统·信仰·教导·指引',u:'寻求传统智慧或导师指引，遵循规则与体系。',r:'打破常规，挑战权威，或陷入教条与形式主义。',adv:'尊重传统，但也要保留自己的判断与体验。'},
+{n:'恋人',e:'The Lovers',a:'major',num:'VI',s:'✦',k:'爱·结合·选择·价值观',u:'深刻的连接与爱，重要的选择，价值观一致。',r:'关系失衡，选择困难，价值观冲突，犹豫不决。',adv:'跟随你的心，但也要看清现实与对方真实的样子。'},
+{n:'战车',e:'The Chariot',a:'major',num:'VII',s:'✦',k:'意志·胜利·前进·掌控',u:'凭意志力克服障碍，勇往直前，取得胜利。',r:'方向不明，失控，半途而废，或被情绪牵着走。',adv:'坚定目标，驾驭你的情绪与冲动，别让它们反客为主。'},
+{n:'力量',e:'Strength',a:'major',num:'VIII',s:'✦',k:'勇气·耐心·柔韧·内在力量',u:'以柔克刚，耐心与勇气并存，内在力量强大。',r:'自我怀疑，缺乏耐心，被情绪或欲望控制。',adv:'温柔而坚定，真正的力量来自内在的稳定。'},
+{n:'隐士',e:'The Hermit',a:'major',num:'IX',s:'✦',k:'内省·孤独·智慧·寻找',u:'独处内省，寻找内在答案，智慧来自沉淀。',r:'孤立自己，逃避现实，或拒绝他人善意的帮助。',adv:'给自己独处的时间，但也别把心门完全关上。'},
+{n:'命运之轮',e:'Wheel of Fortune',a:'major',num:'X',s:'✦',k:'循环·转折·命运·机遇',u:'命运的转折点，好运降临，循环往复，时机成熟。',r:'运势低迷，抗拒变化，或时机未到，需耐心等待。',adv:'顺应变化，抓住转机；低谷之后必是上升。'},
+{n:'正义',e:'Justice',a:'major',num:'XI',s:'✦',k:'公正·平衡·因果·责任',u:'公正与平衡，因果报应，为自己的选择负责。',r:'不公，失衡，逃避责任，或判断有误、被偏见蒙蔽。',adv:'诚实面对，承担该承担的；公平从自己开始。'},
+{n:'倒吊人',e:'The Hanged Man',a:'major',num:'XII',s:'✦',k:'牺牲·等待·换位·顿悟',u:'换个角度看问题，主动等待，以退为进，顿悟在即。',r:'无谓牺牲，拖延，固执己见，或陷入自我感动。',adv:'暂停一下，换个视角；有时候不作为就是最好的作为。'},
+{n:'死神',e:'Death',a:'major',num:'XIII',s:'✦',k:'结束·转化·重生·放下',u:'旧的结束带来新的开始，深刻转化，放下过去。',r:'抗拒改变，停滞不前，沉溺于过去而无法前行。',adv:'勇敢结束该结束的，才能迎来真正的新生。'},
+{n:'节制',e:'Temperance',a:'major',num:'XIV',s:'✦',k:'平衡·调和·耐心·中庸',u:'平衡与调和，耐心等待，找到中庸之道。',r:'失衡，极端，缺乏耐心，或资源与精力浪费。',adv:'慢慢来，找到属于你的平衡点，不必急于求成。'},
+{n:'恶魔',e:'The Devil',a:'major',num:'XV',s:'✦',k:'束缚·欲望·执着·阴影',u:'被欲望或执念束缚，看见自己的阴影面。',r:'挣脱束缚，觉察并放下执念，重获自由。',adv:'看清是什么在控制你，承认它，然后才能真正放手。'},
+{n:'塔',e:'The Tower',a:'major',num:'XVI',s:'✦',k:'崩塌·突变·觉醒·解放',u:'突如其来的崩塌，旧结构瓦解，痛苦但带来觉醒。',r:'抗拒改变，延迟的崩塌，或勉强避免了灾难。',adv:'接受崩塌，它会带来真正的自由；废墟上才能重建。'},
+{n:'星星',e:'The Star',a:'major',num:'XVII',s:'✦',k:'希望·疗愈·灵感·信念',u:'希望与疗愈，灵感涌现，对未来充满信念。',r:'失去信心，绝望，或疗愈受阻，暂时看不到光。',adv:'保持希望，相信自己；黑夜再长，星星始终在。'},
+{n:'月亮',e:'The Moon',a:'major',num:'XVIII',s:'✦',k:'幻象·恐惧·潜意识·迷雾',u:'面对幻象与恐惧，潜意识浮现，事情尚不明朗。',r:'迷雾散去，真相浮现，恐惧消退，看清了方向。',adv:'别被表象迷惑，给自己时间慢慢看清；恐惧多半是幻影。'},
+{n:'太阳',e:'The Sun',a:'major',num:'XIX',s:'✦',k:'喜悦·成功·活力·光明',u:'喜悦与成功，活力充沛，一切明朗，值得庆祝。',r:'暂时的阴霾，过度乐观，或成功被延迟。',adv:'享受当下，保持积极；你的光会照亮前路。'},
+{n:'审判',e:'Judgement',a:'major',num:'XX',s:'✦',k:'觉醒·召唤·重生·总结',u:'觉醒与召唤，总结过去，迎来重生与新的阶段。',r:'自我怀疑，逃避召唤，沉溺过去而不敢向前。',adv:'听从内心的召唤，重新出发；过去只是序章。'},
+{n:'世界',e:'The World',a:'major',num:'XXI',s:'✦',k:'完成·圆满·整合·成就',u:'圆满完成，整合所有经验，达成目标，功德圆满。',r:'未完成，缺乏收尾，停滞不前，或差临门一脚。',adv:'善始善终，庆祝你的成就，然后开启新的循环。'},
+
+/* ---------- 权杖 ---------- */
+{n:'权杖Ace',e:'Ace of Wands',a:'wands',num:'A',s:'🔥',k:'灵感·机遇·新开始',u:'新的灵感与机遇降临，充满热情与行动力。',r:'缺乏方向，灵感受阻，或机会被错过。',adv:'抓住那股冲动，先做起来再说。'},
+{n:'权杖二',e:'Two of Wands',a:'wands',num:'II',s:'🔥',k:'规划·远见·抉择',u:'站在起点远眺未来，需要做出规划与选择。',r:'恐惧改变，犹豫不决，计划迟迟无法落地。',adv:'看清全局再做决定，但别只停留在想。'},
+{n:'权杖三',e:'Three of Wands',a:'wands',num:'III',s:'🔥',k:'扩展·远眺·等待',u:'计划开始推进，向外扩展，等待收获。',r:'计划受阻，延误，或因短视而错失机会。',adv:'耐心等待，同时保持行动，船已出海。'},
+{n:'权杖四',e:'Four of Wands',a:'wands',num:'IV',s:'🔥',k:'稳定·庆祝·和谐',u:'阶段性的稳定与庆祝，家庭和谐，值得欢庆。',r:'不稳定，过渡期，或庆祝被推迟。',adv:'享受当下的安稳，也别忘了继续前行。'},
+{n:'权杖五',e:'Five of Wands',a:'wands',num:'V',s:'🔥',k:'竞争·冲突·混乱',u:'竞争与冲突，多方意见不一，局面混乱。',r:'逃避冲突，或内耗严重，精力被分散。',adv:'把竞争转化为动力，别陷入无意义的争吵。'},
+{n:'权杖六',e:'Six of Wands',a:'wands',num:'VI',s:'🔥',k:'胜利·认可·成就',u:'获得胜利与认可，努力被看见，信心大增。',r:'失败，不被认可，或骄傲自满。',adv:'享受荣耀，但保持谦逊，下一程还在继续。'},
+{n:'权杖七',e:'Seven of Wands',a:'wands',num:'VII',s:'🔥',k:'防御·坚持·勇气',u:'坚守立场，勇敢防御，你有能力守住阵地。',r:'力不从心，放弃抵抗，或过度防备。',adv:'站稳脚跟，你的立场值得被捍卫。'},
+{n:'权杖八',e:'Eight of Wands',a:'wands',num:'VIII',s:'🔥',k:'快速·消息·进展',u:'事情快速推进，消息传来，进展神速。',r:'延误，停滞，或消息被阻断。',adv:'抓住节奏，快速行动，别拖泥带水。'},
+{n:'权杖九',e:'Nine of Wands',a:'wands',num:'IX',s:'🔥',k:'坚持·警惕·韧性',u:'历经考验仍坚持，最后关头需保持警惕。',r:'疲惫不堪，过度防备，或想放弃。',adv:'再坚持一下，你已经走了很远。'},
+{n:'权杖十',e:'Ten of Wands',a:'wands',num:'X',s:'🔥',k:'重担·责任·压力',u:'承担过多，压力巨大，但仍在负重前行。',r:'放下负担，或濒临崩溃，需要卸下一些。',adv:'学会分担与放下，你不必一个人扛所有。'},
+{n:'权杖侍从',e:'Page of Wands',a:'wands',num:'侍从',s:'🔥',k:'热情·探索·新想法',u:'充满热情与好奇，愿意尝试新事物。',r:'不成熟，三分钟热度，或方向不明。',adv:'保持热情，但也要有始有终。'},
+{n:'权杖骑士',e:'Knight of Wands',a:'wands',num:'骑士',s:'🔥',k:'行动·冒险·热情',u:'勇敢行动，充满冒险精神，快速推进。',r:'冲动，鲁莽，或虎头蛇尾。',adv:'行动力是你的优势，但记得看清方向。'},
+{n:'权杖王后',e:'Queen of Wands',a:'wands',num:'王后',s:'🔥',k:'自信·魅力·温暖',u:'自信而有魅力，温暖他人，掌控自己的领域。',r:'嫉妒，控制欲强，或缺乏自信。',adv:'相信自己的魅力，也给别人空间。'},
+{n:'权杖国王',e:'King of Wands',a:'wands',num:'国王',s:'🔥',k:'领导·远见·权威',u:'有领导力与远见，能带领众人前行。',r:'独断专行，暴躁，或滥用权威。',adv:'领导力来自担当，而非命令。'},
+
+/* ---------- 圣杯 ---------- */
+{n:'圣杯Ace',e:'Ace of Cups',a:'cups',num:'A',s:'💧',k:'新感情·爱·直觉',u:'新的情感开始，爱意涌动，直觉敏锐。',r:'情感封闭，空虚，或爱被压抑。',adv:'敞开心扉，允许自己去爱与被爱。'},
+{n:'圣杯二',e:'Two of Cups',a:'cups',num:'II',s:'💧',k:'连接·伙伴·吸引',u:'深刻的连接与吸引，伙伴关系和谐。',r:'分离，失衡，或关系出现裂痕。',adv:'珍惜彼此的连接，用心经营。'},
+{n:'圣杯三',e:'Three of Cups',a:'cups',num:'III',s:'💧',k:'友谊·庆祝·群体',u:'友谊与庆祝，群体和谐，共享喜悦。',r:'过度放纵，流言蜚语，或关系复杂。',adv:'享受友情，但别被群体裹挟。'},
+{n:'圣杯四',e:'Four of Cups',a:'cups',num:'IV',s:'💧',k:'冷漠·沉思·不满',u:'对现状不满，陷入沉思，忽略了眼前的机会。',r:'觉醒，新机会出现，走出冷漠。',adv:'抬头看看，机会可能就在你面前。'},
+{n:'圣杯五',e:'Five of Cups',a:'cups',num:'V',s:'💧',k:'失落·悲伤·遗憾',u:'失落与悲伤，聚焦于失去的，忽略了剩下的。',r:'接受现实，走出悲伤，重新看到希望。',adv:'允许自己难过，但别忘了还有未失去的。'},
+{n:'圣杯六',e:'Six of Cups',a:'cups',num:'VI',s:'💧',k:'怀旧·纯真·童年',u:'怀旧与纯真，旧人旧事带来温暖。',r:'困在过去，无法成长，或过度理想化。',adv:'珍惜回忆，但活在当下。'},
+{n:'圣杯七',e:'Seven of Cups',a:'cups',num:'VII',s:'💧',k:'幻想·选择·迷惑',u:'面对众多选择，容易陷入幻想与迷惑。',r:'清醒，做出决定，或看清幻想本质。',adv:'分清幻想与真实，选择最踏实的那条路。'},
+{n:'圣杯八',e:'Eight of Cups',a:'cups',num:'VIII',s:'💧',k:'离开·追寻·放下',u:'主动离开不再满足的现状，去追寻更深的满足。',r:'徘徊不定，不敢离开，或逃避现实。',adv:'有些离开是为了更好的相遇。'},
+{n:'圣杯九',e:'Nine of Cups',a:'cups',num:'IX',s:'💧',k:'满足·愿望达成',u:'愿望达成，内心满足，享受成果。',r:'不满，空虚，或愿望落空。',adv:'享受当下，但问问自己真正想要什么。'},
+{n:'圣杯十',e:'Ten of Cups',a:'cups',num:'X',s:'💧',k:'圆满·家庭·幸福',u:'情感圆满，家庭和谐，幸福洋溢。',r:'关系破裂，不和谐，或表面幸福。',adv:'幸福需要经营，别把它当成理所当然。'},
+{n:'圣杯侍从',e:'Page of Cups',a:'cups',num:'侍从',s:'💧',k:'感性·创意·消息',u:'感性而富有创意，可能收到情感方面的消息。',r:'情绪化，逃避现实，或过度敏感。',adv:'让情感流动，但别被情绪淹没。'},
+{n:'圣杯骑士',e:'Knight of Cups',a:'cups',num:'骑士',s:'💧',k:'浪漫·追求·邀请',u:'浪漫的追求，带着爱意的邀请。',r:'虚假承诺，情绪化，或逃避责任。',adv:'用心感受，但也要看行动是否一致。'},
+{n:'圣杯王后',e:'Queen of Cups',a:'cups',num:'王后',s:'💧',k:'温柔·共情·直觉',u:'温柔而有共情力，直觉敏锐，善于照顾他人。',r:'情绪依赖，过度敏感，或失去自我。',adv:'照顾好自己，才能更好地照顾别人。'},
+{n:'圣杯国王',e:'King of Cups',a:'cups',num:'国王',s:'💧',k:'稳定·包容·智慧',u:'情绪稳定，包容而有智慧，能平衡情感与理性。',r:'冷漠，操控情感，或压抑真实感受。',adv:'真正的强大是能温柔地面对情绪。'},
+
+/* ---------- 宝剑 ---------- */
+{n:'宝剑Ace',e:'Ace of Swords',a:'swords',num:'A',s:'⚔️',k:'清晰·突破·真相',u:'思路清晰，突破迷雾，看清真相。',r:'混乱，错误判断，或真相被掩盖。',adv:'用理性劈开迷雾，真相往往很简单。'},
+{n:'宝剑二',e:'Two of Swords',a:'swords',num:'II',s:'⚔️',k:'僵局·抉择·回避',u:'陷入僵局，回避抉择，内心矛盾。',r:'打破僵局，面对现实，做出决定。',adv:'回避不能解决问题，该面对的迟早要面对。'},
+{n:'宝剑三',e:'Three of Swords',a:'swords',num:'III',s:'⚔️',k:'伤心·痛苦·分离',u:'伤心与痛苦，分离或背叛带来刺痛。',r:'疗愈，释怀，走出伤痛。',adv:'允许自己痛，但别让痛定义你。'},
+{n:'宝剑四',e:'Four of Swords',a:'swords',num:'IV',s:'⚔️',k:'休息·恢复·冥想',u:'需要休息与恢复，静养身心，暂避纷扰。',r:'焦虑，无法休息，或被迫停下。',adv:'休息不是浪费时间，是为了走更远。'},
+{n:'宝剑五',e:'Five of Swords',a:'swords',num:'V',s:'⚔️',k:'冲突·失败·争执',u:'冲突与争执，即使赢了也可能失去更多。',r:'和解，放下，或承认失败并成长。',adv:'有些胜利不值得，退一步海阔天空。'},
+{n:'宝剑六',e:'Six of Swords',a:'swords',num:'VI',s:'⚔️',k:'过渡·离开·疗愈',u:'过渡期，离开伤心地，走向平静。',r:'停滞，无法前进，或旧伤未愈。',adv:'慢慢来，过渡需要时间，方向是对的。'},
+{n:'宝剑七',e:'Seven of Swords',a:'swords',num:'VII',s:'⚔️',k:'策略·欺骗·隐瞒',u:'需要策略与智慧，也可能涉及隐瞒或欺骗。',r:'坦白，被揭穿，或放弃欺骗。',adv:'诚实是最简单的策略，别聪明反被聪明误。'},
+{n:'宝剑八',e:'Eight of Swords',a:'swords',num:'VIII',s:'⚔️',k:'束缚·限制·自我设限',u:'感到被束缚，但很多限制其实来自内心。',r:'解脱，新视角，挣脱自我设限。',adv:'束缚你的往往不是外界，而是你的想法。'},
+{n:'宝剑九',e:'Nine of Swords',a:'swords',num:'IX',s:'⚔️',k:'焦虑·噩梦·担忧',u:'焦虑与担忧，夜里难眠，被恐惧困扰。',r:'希望，走出焦虑，或发现担忧是多余的。',adv:'把担忧写下来，你会发现多数不会发生。'},
+{n:'宝剑十',e:'Ten of Swords',a:'swords',num:'X',s:'⚔️',k:'结束·背叛·谷底',u:'一个痛苦的结束，跌至谷底，但物极必反。',r:'重生，恢复，从谷底爬起。',adv:'最坏的时刻往往就是转机的开始。'},
+{n:'宝剑侍从',e:'Page of Swords',a:'swords',num:'侍从',s:'⚔️',k:'好奇·警觉·新想法',u:'好奇而警觉，思维活跃，喜欢探索真相。',r:'多疑，口舌是非，或想法不成熟。',adv:'保持好奇，但说话前先想三秒。'},
+{n:'宝剑骑士',e:'Knight of Swords',a:'swords',num:'骑士',s:'⚔️',k:'果断·快速·冲动',u:'果断行动，快速推进，思维敏捷。',r:'鲁莽，攻击性强，或欲速不达。',adv:'行动力强是好事，但记得带上耐心。'},
+{n:'宝剑王后',e:'Queen of Swords',a:'swords',num:'王后',s:'⚔️',k:'理性·独立·清晰',u:'理性而独立，看问题清晰，善于表达。',r:'冷漠，刻薄，或过于理性而缺乏温度。',adv:'保持清醒，但别忘了温度。'},
+{n:'宝剑国王',e:'King of Swords',a:'swords',num:'国王',s:'⚔️',k:'权威·逻辑·公正',u:'有权威与逻辑，公正判断，理性决策。',r:'专制，滥用权力，或冷酷无情。',adv:'用理性领导，但也要倾听人心。'},
+
+/* ---------- 星币 ---------- */
+{n:'星币Ace',e:'Ace of Pentacles',a:'pentacles',num:'A',s:'🪙',k:'新机会·财富·现实',u:'新的物质机会降临，财务或事业上的好开始。',r:'错失机会，财务匮乏，或计划落空。',adv:'脚踏实地，机会需要行动来兑现。'},
+{n:'星币二',e:'Two of Pentacles',a:'pentacles',num:'II',s:'🪙',k:'平衡·灵活·多任务',u:'在多个任务间灵活平衡，需要随机应变。',r:'失衡，混乱，或顾此失彼。',adv:'分清轻重缓急，别什么都想抓。'},
+{n:'星币三',e:'Three of Pentacles',a:'pentacles',num:'III',s:'🪙',k:'合作·技能·认可',u:'通过合作与技能获得认可，团队协作顺利。',r:'缺乏合作，平庸，或努力不被看见。',adv:'发挥你的专长，也学会借力。'},
+{n:'星币四',e:'Four of Pentacles',a:'pentacles',num:'IV',s:'🪙',k:'保守·控制·储蓄',u:'保守稳健，善于储蓄，但可能过于紧握。',r:'贪婪，放手，或财务失控。',adv:'该守的守住，该花的也别太吝啬。'},
+{n:'星币五',e:'Five of Pentacles',a:'pentacles',num:'V',s:'🪙',k:'贫困·困难·孤立',u:'经历困难与匮乏，感到孤立无援。',r:'恢复，获得援助，走出困境。',adv:'接受帮助不丢人，困难是暂时的。'},
+{n:'星币六',e:'Six of Pentacles',a:'pentacles',num:'VI',s:'🪙',k:'给予·接受·公平',u:'给予与接受的平衡，公平对待，乐于分享。',r:'不平等，债务，或付出与回报失衡。',adv:'慷慨的同时，也要保护好自己。'},
+{n:'星币七',e:'Seven of Pentacles',a:'pentacles',num:'VII',s:'🪙',k:'耐心·等待·评估',u:'耐心等待成果，评估投入与回报。',r:'急躁，放弃，或投资回报不佳。',adv:'耐心是美德，但也别死守无效的投入。'},
+{n:'星币八',e:'Eight of Pentacles',a:'pentacles',num:'VIII',s:'🪙',k:'专注·精进·学徒',u:'专注精进，脚踏实地打磨技能，终有回报。',r:'完美主义，敷衍，或缺乏专注。',adv:'把一件事做到极致，胜过做十件平庸的事。'},
+{n:'星币九',e:'Nine of Pentacles',a:'pentacles',num:'IX',s:'🪙',k:'独立·丰盛·享受',u:'独立自主，享受丰盛成果，生活优雅。',r:'依赖，虚荣，或财务不稳。',adv:'享受你努力的成果，你值得。'},
+{n:'星币十',e:'Ten of Pentacles',a:'pentacles',num:'X',s:'🪙',k:'财富·传承·家庭',u:'财富与传承，家庭稳定，长久的安全感。',r:'财务问题，短视，或家庭矛盾。',adv:'着眼长远，为未来打下基础。'},
+{n:'星币侍从',e:'Page of Pentacles',a:'pentacles',num:'侍从',s:'🪙',k:'学习·务实·新技能',u:'务实学习新技能，为未来打下基础。',r:'拖延，不专注，或眼高手低。',adv:'从小事做起，积累就是力量。'},
+{n:'星币骑士',e:'Knight of Pentacles',a:'pentacles',num:'骑士',s:'🪙',k:'稳健·勤奋·可靠',u:'稳健勤奋，一步一个脚印，值得信赖。',r:'停滞，固执，或过于保守。',adv:'稳是优点，但别让稳变成不动。'},
+{n:'星币王后',e:'Queen of Pentacles',a:'pentacles',num:'王后',s:'🪙',k:'务实·滋养·丰盛',u:'务实而滋养，善于经营生活与财务。',r:'忽视自我，物质主义，或过度操劳。',adv:'照顾好自己，才能照顾好生活。'},
+{n:'星币国王',e:'King of Pentacles',a:'pentacles',num:'国王',s:'🪙',k:'成功·稳定·慷慨',u:'事业有成，财务稳定，慷慨而有担当。',r:'固执，贪婪，或物质至上。',adv:'财富是工具，不是目的。'}
+];
+
+/* ============================================================
+   流星背景
+============================================================ */
+const meteorContainer = document.getElementById('meteors');
+
+function createMeteor() {
+    const m = document.createElement('div');
+    m.className = 'meteor';
+    const size = 1.5 + Math.random() * 2;
+    const dur = 1.8 + Math.random() * 2.2;
+    const del = Math.random() * 0.5;
+    m.style.left = (60 + Math.random() * 45) + '%';
+    m.style.top = (Math.random() * 30) + '%';
+    m.style.width = size + 'px';
+    m.style.height = size + 'px';
+    m.style.animationDuration = dur + 's';
+    m.style.animationDelay = del + 's';
+    meteorContainer.appendChild(m);
+    setTimeout(() => m.remove(), (dur + del) * 1000 + 150);
+}
+
+for (let i = 0; i < 7; i++) setTimeout(createMeteor, i * 280);
+setInterval(createMeteor, 520);
+
+/* ============================================================
+   随机工具
+============================================================ */
+function mulberry32(a) {
+    return function() {
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+}
+
+// 关键：把输入数字 + 时间 + 随机数混合成种子
+// 这样输入相同数字，每次结果也不同
+function makeEntropy(inputNum) {
+    const t = Date.now() % 10000000;
+    const r = Math.random() * 10000000;
+    const n = Number.isFinite(inputNum) ? inputNum * 137.7 : 0;
+    return (t + r + n) >>> 0;
+}
+
+// 从 78 张牌中洗出 count 张
+function makeTable(seed, count = 9) {
+    const rng = mulberry32(seed);
+    const pool = DECK.slice();
+    const result = [];
+    for (let i = 0; i < count; i++) {
+        const idx = Math.floor(rng() * pool.length);
+        const card = pool.splice(idx, 1)[0];
+        result.push({ ...card, reversed: rng() < 0.42 });
+    }
+    return result;
+}
+
+/* ============================================================
+   全局状态
+============================================================ */
+const state = {
+    question: '',
+    inputNum: 0,
+    selectedCards: [],   // 主牌 3 张
+    clarifyCards: [],    // 补牌
+    tableCards: [],      // 当前牌桌上的 9 张
+    mode: 'main',        // 'main' | 'clarify'
+    pickCount: 0,
+    maxPicks: 3
+};
+
+const POSITIONS = [
+    { name: '起因', desc: '事情的根源与潜在动力' },
+    { name: '现状', desc: '当前的核心状况' },
+    { name: '指引', desc: '建议与未来的走向' }
+];
+
+/* ============================================================
+   DOM 引用
+============================================================ */
+const setupPanel = document.getElementById('setupPanel');
+const pickPanel = document.getElementById('pickPanel');
+const resultPanel = document.getElementById('resultPanel');
+const cardTable = document.getElementById('cardTable');
+const pickTitle = document.getElementById('pickTitle');
+const spreadEl = document.getElementById('spread');
+const readingEl = document.getElementById('reading');
+const clarifyArea = document.getElementById('clarifyArea');
+const clarifyCardsEl = document.getElementById('clarifyCards');
+const clarifyReadingEl = document.getElementById('clarifyReading');
+const questionInput = document.getElementById('question');
+const seedInput = document.getElementById('seedInput');
+const btnStart = document.getElementById('btnStart');
+const btnClarify = document.getElementById('btnClarify');
+const btnReset = document.getElementById('btnReset');
+
+/* ============================================================
+   牌桌渲染
+============================================================ */
+function renderTable(mode) {
+    cardTable.innerHTML = '';
+    state.tableCards.forEach((card, i) => {
+        const el = document.createElement('div');
+        el.className = 'flip-card';
+        el.dataset.idx = i;
+        el.style.animationDelay = (i * 0.06) + 's';
+
+        const ori = card.reversed ? '逆位' : '正位';
+        const oriClass = card.reversed ? 'rev' : 'up';
+        const revClass = card.reversed ? 'reversed' : '';
+
+        el.innerHTML = `
+            <div class="flip-inner">
+                <div class="face back-face"></div>
+                <div class="face front-face ${revClass}">
+                    <div class="fc-symbol">${card.s}</div>
+                    <div class="fc-name">${card.n}</div>
+                    <div class="fc-ori ${oriClass}">${ori}</div>
+                </div>
+            </div>
+        `;
+
+        el.addEventListener('click', () => handleCardClick(el, i));
+        cardTable.appendChild(el);
+    });
+}
+
+/* ============================================================
+   点击牌背 · 翻牌
+============================================================ */
+function handleCardClick(el, idx) {
+    if (el.classList.contains('flipped')) return;
+    if (state.mode === 'main' && state.pickCount >= state.maxPicks) return;
+
+    el.classList.add('flipped');
+    const card = state.tableCards[idx];
+
+    if (state.mode === 'main') {
+        state.selectedCards.push(card);
+        state.pickCount++;
+        pickTitle.innerHTML = `请点击三张牌 · 已选 <span class="count">${state.pickCount}</span> / 3`;
+
+        if (state.pickCount >= state.maxPicks) {
+            // 其余牌变暗不可点
+            document.querySelectorAll('.flip-card:not(.flipped)').forEach(c => {
+                c.style.pointerEvents = 'none';
+                c.style.opacity = '0.35';
+            });
+            setTimeout(() => {
+                pickPanel.style.display = 'none';
+                showResult();
+            }, 950);
+        }
+    } else {
+        // 补牌模式
+        state.clarifyCards.push(card);
+        document.querySelectorAll('.flip-card:not(.flipped)').forEach(c => {
+            c.style.pointerEvents = 'none';
+            c.style.opacity = '0.35';
+        });
+        setTimeout(() => {
+            pickPanel.style.display = 'none';
+            showResult();
+        }, 950);
+    }
+}
+
+/* ============================================================
+   显示结果
+============================================================ */
+function showResult() {
+    // 主牌阵
+    let spreadHTML = '';
+    state.selectedCards.forEach((card, i) => {
+        const revClass = card.reversed ? 'reversed' : '';
+        const ori = card.reversed ? '逆位' : '正位';
+        const oriClass = card.reversed ? 'rev' : 'up';
+        spreadHTML += `
+            <div class="card-slot">
+                <div class="card ${revClass}">
+                    <div class="card-pos">${POSITIONS[i].name}</div>
+                    <div class="card-symbol">${card.s}</div>
+                    <div class="card-name">${card.n}</div>
+                    <div class="card-ori ${oriClass}">${ori}</div>
+                </div>
+            </div>
+        `;
+    });
+    spreadEl.innerHTML = spreadHTML;
+
+    // 解读
+    readingEl.innerHTML = buildReading(state.selectedCards, state.question);
+
+    // 补牌区
+    if (state.clarifyCards.length > 0) {
+        clarifyArea.style.display = 'block';
+        let miniHTML = '';
+        state.clarifyCards.forEach((c) => {
+            const revClass = c.reversed ? 'rev' : '';
+            const ori = c.reversed ? '逆' : '正';
+            miniHTML += `
+                <div class="mini-card ${revClass}">
+                    <span class="msym">${c.s}</span>
+                    <span class="mname">${c.n}</span>
+                    <span class="mori">· ${ori}位</span>
+                </div>
+            `;
+        });
+        clarifyCardsEl.innerHTML = miniHTML;
+        clarifyReadingEl.innerHTML = buildClarifyReading(state.clarifyCards);
+    } else {
+        clarifyArea.style.display = 'none';
+    }
+
+    // 补牌按钮状态
+    if (state.clarifyCards.length >= 3) {
+        btnClarify.disabled = true;
+        btnClarify.textContent = '补牌已满';
+    } else {
+        btnClarify.disabled = false;
+        btnClarify.textContent = '补 牌';
+    }
+
+    resultPanel.style.display = 'block';
+    resultPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ============================================================
+   解读生成
+============================================================ */
+function buildReading(cards, question) {
+    let html = '';
+
+    if (question && question.trim()) {
+        html += `<div class="section-title">📖 你的问题</div>`;
+        html += `<div class="kv">「${question.trim()}」</div>`;
+    }
+
+    html += `<div class="section-title">🔮 三张牌 · 逐一解读</div>`;
+    cards.forEach((card, i) => {
+        const pos = POSITIONS[i];
+        const ori = card.reversed ? '逆位' : '正位';
+        const oriClass = card.reversed ? 'rev' : 'up';
+        html += `<div class="kv">`;
+        html += `<span class="card-title ${oriClass}">【${pos.name}】${card.n} · ${ori}</span>`;
+        html += `<span class="plain">（${pos.desc}）</span><br>`;
+        html += `<span class="plain">关键词：${card.k}</span><br>`;
+        html += `${card.reversed ? card.r : card.u}<br>`;
+        html += `<span class="highlight">✦ 指导：</span>${card.adv}`;
+        html += `</div>`;
+        if (i < cards.length - 1) html += `<div class="divider"></div>`;
+    });
+
+    html += `<div class="section-title">🧭 综合指引</div>`;
+    const names = cards.map(c => `${c.n}${c.reversed ? '(逆)' : '(正)'}`).join(' → ');
+    html += `<div class="kv">本次牌阵呈现：<span class="highlight">${names}</span></div>`;
+
+    const reversedCount = cards.filter(c => c.reversed).length;
+    const majorCount = cards.filter(c => c.a === 'major').length;
+
+    let overall = '';
+    if (reversedCount === 0) {
+        overall = '三张牌皆为<span class="highlight">正位</span>，能量顺畅，整体形势对你有利，可以更主动地推进。';
+    } else if (reversedCount === 3) {
+        overall = '三张牌皆为<span class="warn">逆位</span>，提示你目前可能处于停滞或内耗状态，宜先调整自身，再谋外部行动。';
+    } else {
+        overall = `牌阵中有${reversedCount}张逆位，提示部分领域存在阻力或需要调整的地方，其余方面仍可顺势而为。`;
+    }
+    html += `<div class="kv">${overall}</div>`;
+
+    if (majorCount >= 2) {
+        html += `<div class="kv">大阿卡纳出现较多，说明这件事对你而言是<span class="highlight">重要的生命课题</span>，影响较为深远。</div>`;
+    }
+
+    const rootCard = cards[0];
+    const nowCard = cards[1];
+    const guideCard = cards[2];
+
+    html += `<div class="kv" style="margin-top:10px;">`;
+    html += `从起因「<span class="card-title ${rootCard.reversed?'rev':'up'}">${rootCard.n}</span>」到现状「<span class="card-title ${nowCard.reversed?'rev':'up'}">${nowCard.n}</span>」，牌面提示你：${nowCard.reversed ? nowCard.r : nowCard.u}`;
+    html += `</div>`;
+
+    html += `<div class="kv">`;
+    html += `而指引牌「<span class="card-title ${guideCard.reversed?'rev':'up'}">${guideCard.n}</span>」给出的方向是：<span class="highlight">${guideCard.adv}</span>`;
+    html += `</div>`;
+
+    html += `<div class="section-title">✧ 最后的话</div>`;
+    html += `<div class="kv plain">塔罗不是预言，而是镜子。它照见你此刻的内心与处境，真正的选择权始终在你手中。愿你在接下来的日子里，带着这份觉察，走出属于自己的路。</div>`;
+
+    return html;
+}
+
+function buildClarifyReading(cards) {
+    let html = `<div class="section-title">✦ 补充牌 · 深层揭示</div>`;
+    cards.forEach((card, i) => {
+        const ori = card.reversed ? '逆位' : '正位';
+        const oriClass = card.reversed ? 'rev' : 'up';
+        html += `<div class="kv">`;
+        html += `<span class="card-title ${oriClass}">补充 ${i + 1}：${card.n} · ${ori}</span><br>`;
+        html += `<span class="plain">关键词：${card.k}</span><br>`;
+        html += `${card.reversed ? card.r : card.u}<br>`;
+        html += `<span class="highlight">✦ 提示：</span>${card.adv}`;
+        html += `</div>`;
+        if (i < cards.length - 1) html += `<div class="divider"></div>`;
+    });
+
+    const reversedCount = cards.filter(c => c.reversed).length;
+    html += `<div class="section-title">✧ 补充综合</div>`;
+    if (cards.length === 1) {
+        html += `<div class="kv">这张补充牌进一步揭示了：${cards[0].reversed ? cards[0].r : cards[0].u}</div>`;
+    } else {
+        html += `<div class="kv">${cards.length}张补充牌共同指向：${cards.map(c => c.k).join('、')}。</div>`;
+    }
+    if (reversedCount > 0) {
+        html += `<div class="kv warn">补充牌中有${reversedCount}张逆位，提示某些隐藏因素需要你特别留意。</div>`;
+    } else {
+        html += `<div class="kv highlight">补充牌皆为正向能量，说明事情的本质是积极的。</div>`;
+    }
+    html += `<div class="kv plain">以上补充信息供你参考，最终判断仍需结合现实情况与你的内心感受。</div>`;
+    return html;
+}
+
+/* ============================================================
+   事件绑定
+============================================================ */
+// 开始抽牌
+btnStart.addEventListener('click', () => {
+    state.question = questionInput.value.trim();
+    state.inputNum = parseInt(seedInput.value) || 0;
+
+    state.selectedCards = [];
+    state.clarifyCards = [];
+    state.pickCount = 0;
+    state.mode = 'main';
+
+    // 关键：种子由输入数字 + 时间 + 随机数混合，输入相同数字也会不同结果
+    const entropy = makeEntropy(state.inputNum);
+    state.tableCards = makeTable(entropy, 9);
+
+    renderTable('main');
+    pickTitle.innerHTML = `请点击三张牌 · 已选 <span class="count">0</span> / 3`;
+
+    setupPanel.style.display = 'none';
+    resultPanel.style.display = 'none';
+    pickPanel.style.display = 'block';
+    pickPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+// 补牌
+btnClarify.addEventListener('click', () => {
+    if (state.clarifyCards.length >= 3) return;
+
+    state.mode = 'clarify';
+    // 补牌用新的混合种子
+    const entropy = makeEntropy(state.inputNum + state.clarifyCards.length + 1);
+    state.tableCards = makeTable(entropy, 9);
+
+    renderTable('clarify');
+    pickTitle.innerHTML = '请点击一张补充牌';
+
+    resultPanel.style.display = 'none';
+    pickPanel.style.display = 'block';
+    pickPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+// 重新占卜
+btnReset.addEventListener('click', () => {
+    state.selectedCards = [];
+    state.clarifyCards = [];
+    state.pickCount = 0;
+    state.mode = 'main';
+
+    seedInput.value = '';
+    questionInput.value = '';
+
+    resultPanel.style.display = 'none';
+    pickPanel.style.display = 'none';
+    setupPanel.style.display = 'block';
+    setupPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+// 回车快捷开始
+seedInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') btnStart.click();
+});
+</script>
+</body>
+</html>
