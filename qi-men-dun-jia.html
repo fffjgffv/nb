@@ -683,6 +683,66 @@
         }
 
         // ============================================================
+        // 随机数字起局：带隐藏随机层
+        // ------------------------------------------------------------
+        // 原来的写法只用 "当前小时 + 数字%24"，同一小时内输入同一个
+        // 数字，排出来的盘必然一模一样。现在拆成两层：
+        //   明面：数字决定日期偏移（0~29 天），保留"数字"的存在感
+        //   暗层：额外 0~59 天随机 + 随机时辰/分/秒，保证每次起局都不同
+        // 再用签名集合兜底，若撞上已经出现过的盘就重新生成。
+        // ============================================================
+
+        const usedRandomSignatures = new Set();
+
+        function dateSignature(date) {
+            const dgz = getDayGanZhi(date);
+            const hgz = getHourGanZhi(dgz.ganIdx, date.getHours());
+            const js = getJuShu(date);
+            return `${dgz.gan}${dgz.zhi}|${hgz.gan}${hgz.zhi}|${js.dun}${js.ju}`;
+        }
+
+        function randomDateFromNum(num) {
+            const now = new Date();
+            const absNum = Math.abs(parseInt(num, 10) || 1);
+
+            // 明面层：数字决定基础日偏移（0~29 天）
+            const dayShift = (absNum - 1) % 30;
+
+            let fallback = null;
+            for (let attempt = 0; attempt < 100; attempt++) {
+                const d = new Date(now.getTime());
+
+                // 暗层①：额外随机 0~59 天
+                d.setDate(d.getDate() + dayShift + Math.floor(Math.random() * 60));
+
+                // 暗层②：随机时辰 + 随机分秒
+                d.setHours(
+                    Math.floor(Math.random() * 24),
+                    Math.floor(Math.random() * 60),
+                    Math.floor(Math.random() * 60),
+                    Math.floor(Math.random() * 1000)
+                );
+
+                const sig = dateSignature(d);
+                if (!usedRandomSignatures.has(sig)) {
+                    usedRandomSignatures.add(sig);
+                    return d;
+                }
+                fallback = d;
+            }
+
+            // 极端兜底：仍然返回一个日期，并再做一次随机微调
+            const d = new Date(now.getTime());
+            d.setDate(d.getDate() + Math.floor(Math.random() * 90));
+            d.setHours(
+                Math.floor(Math.random() * 24),
+                Math.floor(Math.random() * 60),
+                Math.floor(Math.random() * 60)
+            );
+            return d;
+        }
+
+        // ============================================================
         // 渲染九宫格（带白话小字）
         // ============================================================
 
@@ -1058,8 +1118,8 @@
             let date;
             if (useRandom) {
                 const num = parseInt(document.getElementById('randomInput').value) || 1;
-                date = new Date();
-                date.setHours(date.getHours() + (num % 24));
+                // 走带暗随机层的起局函数，同一数字不会排出同一局
+                date = randomDateFromNum(num);
             } else {
                 const val = document.getElementById('timeInput').value;
                 if (!val) { alert('请选择时间'); return; }
