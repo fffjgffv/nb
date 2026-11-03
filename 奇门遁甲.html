@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>奇门遁甲 · 占失物 / 射覆</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            background: #0a0f14;
+            color: #c8d6e5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .app {
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            font-weight: 300;
+            letter-spacing: 6px;
+            color: #20c997;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .sub {
+            text-align: center;
+            color: #5a6c7e;
+            font-size: 0.85rem;
+            margin-bottom: 28px;
+        }
+
+        .panel {
+            background: #111a22;
+            border: 1px solid #1d2b36;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 18px;
+        }
+
+        .tab {
+            flex: 1;
+            background: #16222c;
+            border: 1px solid #1d2b36;
+            color: #7a8c9e;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .tab.active {
+            background: #20c997;
+            color: #0a0f14;
+            border-color: #20c997;
+            font-weight: 600;
+        }
+
+        .tab:hover:not(.active) {
+            border-color: #20c997;
+            color: #20c997;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        label {
+            color: #7a8c9e;
+            font-size: 0.88rem;
+            min-width: 70px;
+        }
+
+        input[type="number"],
+        input[type="datetime-local"] {
+            flex: 1;
+            background: #0d161e;
+            border: 1px solid #1d2b36;
+            color: #c8d6e5;
+            padding: 9px 12px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+            min-width: 160px;
+        }
+
+        input:focus {
+            border-color: #20c997;
+        }
+
+        .btn {
+            background: #20c997;
+            color: #0a0f14;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            letter-spacing: 2px;
+        }
+
+        .btn:hover {
+            background: #1ab385;
+        }
+
+        .btn:active {
+            background: #159c72;
+        }
+
+        .btn-sm {
+            padding: 8px 18px;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        /* 九宫格 */
+        .jiugong {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            background: #1d2b36;
+            border: 2px solid #1d2b36;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+
+        .gong {
+            background: #0f1a22;
+            padding: 10px 6px;
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            font-size: 0.78rem;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .gong .gong-name {
+            color: #20c997;
+            font-weight: 600;
+            font-size: 0.78rem;
+            margin-bottom: 4px;
+            border-bottom: 1px dashed #1d2b36;
+            padding-bottom: 2px;
+        }
+
+        .gong .bashen { color: #e6a23c; }
+        .gong .jiuxing { color: #7eb8da; }
+        .gong .bamen { color: #f0a0a0; }
+        .gong .tiangan { color: #c8d6e5; }
+
+        .gong .gloss {
+            color: #556b7d;
+            font-size: 0.62rem;
+            margin-left: 3px;
+            font-weight: 300;
+        }
+
+        .gong .kong {
+            color: #e74c3c;
+            font-size: 0.68rem;
+        }
+
+        .gong .kong::before {
+            content: "空亡 ";
+        }
+
+        .gong .ma {
+            color: #e67e22;
+            font-size: 0.68rem;
+        }
+
+        .gong .ma::before {
+            content: "驿马 ";
+        }
+
+        .gong.center {
+            background: #13222c;
+        }
+
+        /* 结果区 */
+        .result-box {
+            background: #0d161e;
+            border: 1px solid #1d2b36;
+            border-radius: 8px;
+            padding: 18px;
+            margin-top: 16px;
+            line-height: 1.85;
+            font-size: 0.88rem;
+            color: #b0c4d8;
+            display: none;
+        }
+
+        .result-box.show {
+            display: block;
+        }
+
+        .result-box .section-title {
+            color: #20c997;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin: 14px 0 8px;
+            border-bottom: 1px dashed #1d2b36;
+            padding-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .result-box .section-title:first-child {
+            margin-top: 0;
+        }
+
+        .result-box .term {
+            color: #e6a23c;
+            font-weight: 500;
+        }
+
+        .result-box .plain {
+            color: #7a8c9e;
+            font-size: 0.83rem;
+        }
+
+        .result-box .highlight {
+            color: #20c997;
+            font-weight: 600;
+        }
+
+        .result-box .warn {
+            color: #e6a23c;
+        }
+
+        .result-box .danger {
+            color: #e74c3c;
+        }
+
+        .result-box .kv {
+            margin: 4px 0;
+            padding-left: 10px;
+        }
+
+        .footer-note {
+            text-align: center;
+            color: #3a4a5a;
+            font-size: 0.72rem;
+            margin-top: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .gong {
+                min-height: 110px;
+                font-size: 0.7rem;
+                padding: 6px 4px;
+            }
+            .gong .gloss { display: none; }
+            h1 {
+                font-size: 1.3rem;
+                letter-spacing: 4px;
+            }
+            .row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            label { min-width: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <h1>奇门遁甲</h1>
+        <p class="sub">占失物 · 射覆</p>
+
+        <!-- 控制面板 -->
+        <div class="panel">
+            <div class="tabs">
+                <div class="tab active" data-mode="lost">占失物</div>
+                <div class="tab" data-mode="shefu">射覆</div>
+            </div>
+
+            <div class="row" style="margin-bottom:12px;">
+                <label>起局方式</label>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-sm" id="btnTime" style="opacity:1;">时间起局</button>
+                    <button class="btn btn-sm" id="btnRandom" style="background:#16222c;color:#7a8c9e;">随机数字</button>
+                </div>
+            </div>
+
+            <!-- 时间输入 -->
+            <div class="row" id="timeRow" style="margin-bottom:12px;">
+                <label>选择时间</label>
+                <input type="datetime-local" id="timeInput" step="3600">
+            </div>
+
+            <!-- 随机数字输入 -->
+            <div class="row" id="randomRow" style="margin-bottom:12px;display:none;">
+                <label>输入数字</label>
+                <input type="number" id="randomInput" placeholder="例如 3" min="1" max="999" style="max-width:160px;">
+                <button class="btn btn-sm" id="btnRandomGen" style="background:#16222c;color:#7a8c9e;">随机</button>
+            </div>
+
+            <div class="row" style="margin-top:16px;">
+                <button class="btn" id="btnPaipan">排 盘</button>
+            </div>
+        </div>
+
+        <!-- 排盘展示 -->
+        <div class="panel">
+            <div class="jiugong" id="jiugong"></div>
+            <div id="resultBox" class="result-box"></div>
+        </div>
+
+        <p class="footer-note">时家转盘奇门 · 拆补法定局 · 仅供研习参考</p>
+    </div>
+
+    <script>
+        // ============================================================
+        // 基础数据
+        // ============================================================
+
+        const GAN = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+        const ZHI = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+
+        const PALACE_NAME = {
+            1: '坎一宫 · 正北',
+            2: '坤二宫 · 西南',
+            3: '震三宫 · 正东',
+            4: '巽四宫 · 东南',
+            5: '中五宫',
+            6: '乾六宫 · 西北',
+            7: '兑七宫 · 正西',
+            8: '艮八宫 · 东北',
+            9: '离九宫 · 正南'
+        };
+
+        // ============================================================
+        // 白话对照表（让术语变人话）
+        // ============================================================
+
+        const GOD_GLOSS = {
+            '值符': '贵人·主导',
+            '螣蛇': '虚惊·缠绕',
+            '太阴': '隐藏·暗中',
+            '六合': '和合·中介',
+            '白虎': '凶猛·道路',
+            '玄武': '盗贼·暗昧',
+            '九地': '低处·稳固',
+            '九天': '高处·远扬'
+        };
+
+        const GOD_DESC = {
+            '值符': '诸神之首，代表贵人、权威、核心事物',
+            '螣蛇': '虚惊怪异、缠绕曲折、心神不宁',
+            '太阴': '暗中庇护、隐藏遮蔽、阴柔细腻',
+            '六合': '和合中介、多人共谋、婚姻合作',
+            '白虎': '道路凶险、刚猛伤灾、白色之物',
+            '玄武': '盗贼暗昧、欺骗隐蔽、水湿之物',
+            '九地': '低处隐藏、稳固不动、地下之物',
+            '九天': '高处远扬、飞扬变动、飞行之物'
+        };
+
+        const STAR_GLOSS = {
+            '天蓬': '水·盗贼',
+            '天任': '土·稳重',
+            '天冲': '木·急躁',
+            '天辅': '木·文雅',
+            '天英': '火·明亮',
+            '天芮': '土·疾病',
+            '天柱': '金·口舌',
+            '天心': '金·医药',
+            '天禽': '土·中正'
+        };
+
+        const STAR_DESC = {
+            '天蓬': '属水，主盗贼、水险、贪狼，物为蓬状、伞状',
+            '天任': '属土，主稳重、田产、忠厚，物为土中生长之物',
+            '天冲': '属木，主急躁、勇猛、争斗，物为快速震动之物',
+            '天辅': '属木，主文雅、辅助、学问，物为细长文雅之物',
+            '天英': '属火，主光明、美丽、文采，物为有光艳之物',
+            '天芮': '属土，主疾病、迟钝、孕育，物为有壳有皮之物',
+            '天柱': '属金，主口舌、破败、阻挡，物为直立柱状之物',
+            '天心': '属金，主医药、灵巧、心机，物为圆润精巧之物',
+            '天禽': '属土，主中正、包容、禽鸟，物为有翼或有羽之物'
+        };
+
+        const DOOR_GLOSS = {
+            '休门': '吉·休息',
+            '生门': '吉·生财',
+            '伤门': '凶·争斗',
+            '杜门': '中·闭塞',
+            '景门': '中·文书',
+            '死门': '凶·丧事',
+            '惊门': '凶·惊恐',
+            '开门': '吉·通达'
+        };
+
+        const DOOR_DESC = {
+            '休门': '吉门。主休息、安宁、求财、婚姻，物为休闲静止之物',
+            '生门': '吉门。主生机、财帛、生养，物为活物或生长之物',
+            '伤门': '凶门。主伤害、争斗、捕猎，物为车船木器能动之物',
+            '杜门': '中门。主闭塞、躲藏、技术，物为封闭隐藏或竹木之物',
+            '景门': '中门。主文书、图画、血光，物为文书字画鲜艳之物',
+            '死门': '凶门。主死亡、丧事、旧物，物为死物废旧之物',
+            '惊门': '凶门。主惊恐、官非、口舌，物为能发声之物',
+            '开门': '吉门。主开始、通达、金属，物为金属坚硬或带口之物'
+        };
+
+        const STEM_GLOSS = {
+            '甲': '阳木·大树',
+            '乙': '阴木·花草',
+            '丙': '阳火·太阳',
+            '丁': '阴火·灯火',
+            '戊': '阳土·高山',
+            '己': '阴土·田园',
+            '庚': '阳金·刀剑',
+            '辛': '阴金·珠玉',
+            '壬': '阳水·江河',
+            '癸': '阴水·雨露'
+        };
+
+        const STEM_DESC = {
+            '甲': '阳木。如参天大树、栋梁、首领，物为丛杂斑驳之物',
+            '乙': '阴木。如花草藤蔓、柔韧，物为细长有口腹之物',
+            '丙': '阳火。如太阳、光明、热烈，物为圆形红色之物',
+            '丁': '阴火。如灯火、星火、细微，物为尖状有光彩之物',
+            '戊': '阳土。如高山、城墙、厚重，物为刚硬有皮毛之物',
+            '己': '阴土。如田园、湿土、低洼，物为细碎有褶皱之物',
+            '庚': '阳金。如刀剑、钢铁、刚硬，物为四角或空心之物',
+            '辛': '阴金。如珠玉、首饰、精致，物为辛辣或多头绪之物',
+            '壬': '阳水。如江河、大海、流动，物为扁形水湿之物',
+            '癸': '阴水。如雨露、暗流、隐晦，物为有孔窍之物'
+        };
+
+        // ============================================================
+        // 排盘算法
+        // ============================================================
+
+        const EARTH_STEM_SEQ = ['戊','己','庚','辛','壬','癸','丁','丙','乙'];
+
+        const JIEQI_TABLE = [
+            ['冬至','阳',1,7,4], ['小寒','阳',2,8,5], ['大寒','阳',3,9,6],
+            ['立春','阳',8,5,2], ['雨水','阳',9,6,3], ['惊蛰','阳',1,7,4],
+            ['春分','阳',3,9,6], ['清明','阳',4,1,7], ['谷雨','阳',5,2,8],
+            ['立夏','阳',4,1,7], ['小满','阳',5,2,8], ['芒种','阳',6,3,9],
+            ['夏至','阴',9,3,6], ['小暑','阴',8,2,5], ['大暑','阴',7,1,4],
+            ['立秋','阴',2,5,8], ['处暑','阴',1,4,7], ['白露','阴',9,3,6],
+            ['秋分','阴',7,1,4], ['寒露','阴',6,9,3], ['霜降','阴',5,8,2],
+            ['立冬','阴',6,9,3], ['小雪','阴',5,8,2], ['大雪','阴',4,7,1]
+        ];
+
+        function getDayGanZhi(date) {
+            const base = new Date(1900, 0, 1);
+            const diffDays = Math.floor((date - base) / 86400000);
+            const g = (0 + diffDays) % 10;
+            const z = (10 + diffDays) % 12;
+            return { gan: GAN[g], zhi: ZHI[z], ganIdx: g, zhiIdx: z };
+        }
+
+        function getHourGanZhi(dayGanIdx, hour) {
+            let zhiIdx;
+            if (hour >= 23 || hour < 1) zhiIdx = 0;
+            else zhiIdx = Math.floor((hour + 1) / 2) % 12;
+            const startGanMap = [0, 2, 4, 6, 8];
+            const startGan = startGanMap[dayGanIdx % 5];
+            const ganIdx = (startGan + zhiIdx) % 10;
+            return { gan: GAN[ganIdx], zhi: ZHI[zhiIdx], ganIdx, zhiIdx };
+        }
+
+        function getJieQi(date) {
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const monthStart = [6, 4, 6, 5, 6, 6, 7, 8, 8, 8, 7, 7];
+            let jqIdx;
+            if (day < monthStart[month-1]) {
+                jqIdx = (month - 1) * 2 - 2;
+                if (jqIdx < 0) jqIdx += 24;
+            } else {
+                jqIdx = (month - 1) * 2 - 1;
+                if (jqIdx < 0) jqIdx += 24;
+            }
+            jqIdx = ((jqIdx % 24) + 24) % 24;
+            return jqIdx;
+        }
+
+        function getJuShu(date) {
+            const jqIdx = getJieQi(date);
+            const jq = JIEQI_TABLE[jqIdx];
+            const dgz = getDayGanZhi(date);
+            const zhiIdx = dgz.zhiIdx;
+            let yuan;
+            if ([0,6,3,9].includes(zhiIdx)) yuan = 0;
+            else if ([2,8,5,11].includes(zhiIdx)) yuan = 1;
+            else yuan = 2;
+            const dun = jq[1];
+            const ju = jq[2 + yuan];
+            return { dun, ju, jqName: jq[0] };
+        }
+
+        function paipan(date) {
+            const dgz = getDayGanZhi(date);
+            const hour = date.getHours();
+            const hgz = getHourGanZhi(dgz.ganIdx, hour);
+            const { dun, ju, jqName } = getJuShu(date);
+
+            // 地盘
+            const earthPan = {};
+            let palaces = [];
+            if (dun === '阳') {
+                for (let i = 0; i < 9; i++) {
+                    let p = ((ju - 1 + i) % 9) + 1;
+                    palaces.push(p);
+                }
+            } else {
+                for (let i = 0; i < 9; i++) {
+                    let p = ((ju - 1 - i) % 9 + 9) % 9 + 1;
+                    palaces.push(p);
+                }
+            }
+            for (let i = 0; i < 9; i++) {
+                earthPan[palaces[i]] = EARTH_STEM_SEQ[i];
+            }
+
+            // 旬首
+            const xunShouMap = {
+                '甲子': { gan: '戊', zhi: '子' }, '甲戌': { gan: '己', zhi: '戌' },
+                '甲申': { gan: '庚', zhi: '申' }, '甲午': { gan: '辛', zhi: '午' },
+                '甲辰': { gan: '壬', zhi: '辰' }, '甲寅': { gan: '癸', zhi: '寅' }
+            };
+            const hGanIdx = hgz.ganIdx;
+            const hZhiIdx = hgz.zhiIdx;
+            const z0 = ((hZhiIdx - hGanIdx) % 10 + 10) % 10;
+            let xunShouZhiIdx = z0;
+            if (xunShouZhiIdx > 11) xunShouZhiIdx %= 12;
+            const xunShouZhiMap = { 0:'甲子', 10:'甲戌', 8:'甲申', 6:'甲午', 4:'甲辰', 2:'甲寅' };
+            const xunShouName = xunShouZhiMap[xunShouZhiIdx] || '甲子';
+            const xunShouGanChar = xunShouMap[xunShouName]?.gan || '戊';
+
+            // 值符宫
+            let zhifuPalace = null;
+            for (let p = 1; p <= 9; p++) {
+                if (earthPan[p] === xunShouGanChar) { zhifuPalace = p; break; }
+            }
+            if (!zhifuPalace) zhifuPalace = 1;
+
+            const starBasePalace = { '天蓬':1, '天任':8, '天冲':3, '天辅':4, '天英':9, '天芮':2, '天柱':7, '天心':6 };
+            let zhifuStar = null;
+            for (const [star, baseP] of Object.entries(starBasePalace)) {
+                if (baseP === zhifuPalace) { zhifuStar = star; break; }
+            }
+            if (!zhifuStar) zhifuStar = '天蓬';
+
+            const doorBasePalace = { '休门':1, '生门':8, '伤门':3, '杜门':4, '景门':9, '死门':2, '惊门':7, '开门':6 };
+            let zhishiDoor = null;
+            for (const [door, baseP] of Object.entries(doorBasePalace)) {
+                if (baseP === zhifuPalace) { zhishiDoor = door; break; }
+            }
+            if (!zhishiDoor) zhishiDoor = '休门';
+
+            // 时干宫
+            let timeGanPalace = null;
+            for (let p = 1; p <= 9; p++) {
+                if (earthPan[p] === hgz.gan) { timeGanPalace = p; break; }
+            }
+            if (!timeGanPalace) timeGanPalace = 1;
+
+            // 天盘九星
+            const starOrder = ['天蓬','天任','天冲','天辅','天英','天芮','天柱','天心'];
+            let zhifuStarIdx = starOrder.indexOf(zhifuStar);
+            if (zhifuStarIdx < 0) zhifuStarIdx = 0;
+
+            const skyStars = {};
+            skyStars[timeGanPalace] = zhifuStar;
+            const clockwisePalaces = [1, 8, 3, 4, 9, 2, 7, 6];
+            let startIdx = clockwisePalaces.indexOf(timeGanPalace);
+            if (startIdx < 0) startIdx = 0;
+            for (let i = 0; i < 8; i++) {
+                const p = clockwisePalaces[(startIdx + i) % 8];
+                if (p === timeGanPalace) continue;
+                const starIdx = (zhifuStarIdx + i) % 8;
+                skyStars[p] = starOrder[starIdx];
+            }
+
+            // 天盘干
+            const skyStems = {};
+            for (const [p, star] of Object.entries(skyStars)) {
+                const baseP = starBasePalace[star];
+                skyStems[p] = earthPan[baseP] || '';
+            }
+            skyStars[2] = skyStars[2] || '天禽';
+            skyStems[2] = skyStems[2] || earthPan[2];
+
+            // 八门
+            const skyDoors = {};
+            skyDoors[timeGanPalace] = zhishiDoor;
+            const doorOrder = ['休门','生门','伤门','杜门','景门','死门','惊门','开门'];
+            let zhishiDoorIdx = doorOrder.indexOf(zhishiDoor);
+            if (zhishiDoorIdx < 0) zhishiDoorIdx = 0;
+            let doorStartIdx = clockwisePalaces.indexOf(timeGanPalace);
+            if (doorStartIdx < 0) doorStartIdx = 0;
+            for (let i = 0; i < 8; i++) {
+                const p = clockwisePalaces[(doorStartIdx + i) % 8];
+                if (p === timeGanPalace) continue;
+                const dIdx = (zhishiDoorIdx + i) % 8;
+                skyDoors[p] = doorOrder[dIdx];
+            }
+
+            // 八神
+            const skyGods = {};
+            let zhifuGodPalace = null;
+            for (const [p, star] of Object.entries(skyStars)) {
+                if (star === zhifuStar) { zhifuGodPalace = parseInt(p); break; }
+            }
+            if (!zhifuGodPalace) zhifuGodPalace = timeGanPalace;
+
+            let godOrder;
+            if (dun === '阳') {
+                godOrder = ['值符','螣蛇','太阴','六合','白虎','玄武','九地','九天'];
+            } else {
+                godOrder = ['值符','九天','九地','玄武','白虎','六合','太阴','螣蛇'];
+            }
+            const godStartIdx = clockwisePalaces.indexOf(zhifuGodPalace);
+            if (godStartIdx >= 0) {
+                for (let i = 0; i < 8; i++) {
+                    const p = clockwisePalaces[(godStartIdx + i) % 8];
+                    skyGods[p] = godOrder[i];
+                }
+            }
+
+            // 空亡
+            const kongMap = {
+                '甲子': ['戌','亥'], '甲戌': ['申','酉'], '甲申': ['午','未'],
+                '甲午': ['辰','巳'], '甲辰': ['寅','卯'], '甲寅': ['子','丑']
+            };
+            const kongZhi = kongMap[xunShouName] || [];
+
+            // 驿马
+            const maMap = {
+                '子': '寅', '辰': '寅', '申': '寅',
+                '寅': '申', '午': '申', '戌': '申',
+                '巳': '亥', '酉': '亥', '丑': '亥',
+                '亥': '巳', '卯': '巳', '未': '巳'
+            };
+            const maZhi = maMap[dgz.zhi] || '';
+
+            const zhiToPalace = { '子':1, '丑':8, '寅':8, '卯':3, '辰':4, '巳':4, '午':9, '未':2, '申':2, '酉':7, '戌':6, '亥':6 };
+            const kongPalace = {};
+            kongZhi.forEach(z => { if (zhiToPalace[z]) kongPalace[zhiToPalace[z]] = true; });
+            const maPalace = maZhi ? zhiToPalace[maZhi] : null;
+
+            return {
+                date, dun, ju, jqName,
+                dgz, hgz, xunShouName,
+                zhifuStar, zhishiDoor, zhifuPalace,
+                timeGanPalace,
+                earthPan, skyStars, skyStems, skyDoors, skyGods,
+                kongPalace, maPalace,
+                kongZhi, maZhi
+            };
+        }
+
+        // ============================================================
+        // 渲染九宫格（带白话小字）
+        // ============================================================
+
+        function renderPan(chart) {
+            const container = document.getElementById('jiugong');
+            const gridOrder = [4, 9, 2, 3, 5, 7, 8, 1, 6];
+
+            let html = '';
+            for (const p of gridOrder) {
+                const isCenter = p === 5;
+                const star = chart.skyStars[p] || (isCenter ? '天禽' : '');
+                const stem = chart.skyStems[p] || (isCenter ? chart.earthPan[5] : '');
+                const door = chart.skyDoors[p] || '';
+                const god = chart.skyGods[p] || '';
+                const earthStem = chart.earthPan[p] || '';
+                const kong = chart.kongPalace[p] ? 'kong' : '';
+                const ma = chart.maPalace === p ? 'ma' : '';
+
+                let content = '';
+                if (isCenter) {
+                    content = `<div class="gong-name">中五宫</div>
+                               <div class="tiangan">${earthStem || ''}<span class="gloss">${STEM_GLOSS[earthStem] || ''}</span></div>
+                               <div class="plain" style="color:#5a6c7e;font-size:0.68rem;">寄居坤二宫</div>`;
+                } else {
+                    content = `
+                        <div class="gong-name">${PALACE_NAME[p] || p + '宫'}</div>
+                        ${god ? `<div class="bashen" title="${GOD_DESC[god] || ''}">${god}<span class="gloss">${GOD_GLOSS[god] || ''}</span></div>` : ''}
+                        ${star ? `<div class="jiuxing" title="${STAR_DESC[star] || ''}">${star}<span class="gloss">${STAR_GLOSS[star] || ''}</span></div>` : ''}
+                        ${door ? `<div class="bamen" title="${DOOR_DESC[door] || ''}">${door}<span class="gloss">${DOOR_GLOSS[door] || ''}</span></div>` : ''}
+                        ${stem ? `<div class="tiangan" title="${STEM_DESC[stem] || ''}">天盘：${stem}<span class="gloss">${STEM_GLOSS[stem] || ''}</span></div>` : ''}
+                        ${earthStem ? `<div class="tiangan" style="color:#5a6c7e;font-size:0.72rem;">地盘：${earthStem}<span class="gloss">${STEM_GLOSS[earthStem] || ''}</span></div>` : ''}
+                        ${kong ? `<span class="kong"></span>` : ''}
+                        ${ma ? `<span class="ma"></span>` : ''}
+                    `;
+                }
+
+                html += `<div class="gong ${isCenter ? 'center' : ''} ${kong}">${content}</div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // 占失物解读（白话版）
+        // ============================================================
+
+        function interpretLost(chart) {
+            const dgz = chart.dgz;
+            const hgz = chart.hgz;
+            const timeGan = hgz.gan;
+            const dayGan = dgz.gan;
+
+            // 时干落宫
+            let shiGanPalace = null;
+            for (const [p, stem] of Object.entries(chart.skyStems)) {
+                if (stem === timeGan) { shiGanPalace = parseInt(p); break; }
+            }
+            if (!shiGanPalace) {
+                for (const [p, stem] of Object.entries(chart.earthPan)) {
+                    if (stem === timeGan) { shiGanPalace = parseInt(p); break; }
+                }
+            }
+            if (!shiGanPalace) shiGanPalace = 1;
+
+            // 日干落宫
+            let riGanPalace = null;
+            for (const [p, stem] of Object.entries(chart.skyStems)) {
+                if (stem === dayGan) { riGanPalace = parseInt(p); break; }
+            }
+            if (!riGanPalace) {
+                for (const [p, stem] of Object.entries(chart.earthPan)) {
+                    if (stem === dayGan) { riGanPalace = parseInt(p); break; }
+                }
+            }
+            if (!riGanPalace) riGanPalace = 1;
+
+            const shiPalaceName = PALACE_NAME[shiGanPalace] || shiGanPalace + '宫';
+            const riPalaceName = PALACE_NAME[riGanPalace] || riGanPalace + '宫';
+
+            const directionMap = {
+                1: '正北', 2: '西南', 3: '正东', 4: '东南',
+                5: '中宫（寄坤二·西南）', 6: '西北', 7: '正西',
+                8: '东北', 9: '正南'
+            };
+            const direction = directionMap[shiGanPalace] || '未知';
+
+            const isKong = chart.kongPalace[shiGanPalace] || false;
+            const god = chart.skyGods[shiGanPalace] || '';
+            const star = chart.skyStars[shiGanPalace] || '';
+            const door = chart.skyDoors[shiGanPalace] || '';
+            const stolen = god === '玄武' || star === '天蓬';
+
+            const innerPalaces = [1, 8, 3, 4];
+            const isInner = innerPalaces.includes(shiGanPalace);
+
+            const wuLeiXiang = {
+                1: '水晶、珍珠、笔墨、毛发细软之物，或与猪有关',
+                2: '铜铁、鼓磬、中空有声之物，或与牛、羊有关',
+                3: '车船、木器、碧色衣服，或与驴、骡有关',
+                4: '丝䌷、缎布细软之物，彩色细长之物',
+                6: '金镯、宝物、铜铁圆圈之物，或帽缨、马',
+                7: '金银、首饰、有口对襟之物，或羊、鸡、飞禽',
+                8: '山石、玉石、器皿、镫靴之物，或牛、犬、猫',
+                9: '图书、手卷、字画、印信、文劵、彩禽'
+            };
+            const wuXiang = wuLeiXiang[shiGanPalace] || '';
+
+            let result = '';
+
+            // ── 第一部分：起局信息 ──
+            result += `<div class="section-title">📋 起局信息</div>`;
+            result += `<div class="kv">节气：<span class="highlight">${chart.jqName}</span> · ${chart.dun}遁 <span class="highlight">${chart.ju}局</span></div>`;
+            result += `<div class="kv">时间：${chart.dgz.gan}${chart.dgz.zhi}日 ${chart.hgz.gan}${chart.hgz.zhi}时</div>`;
+            result += `<div class="kv">旬首：${chart.xunShouName}（遁干为「${chart.xunShouName === '甲子' ? '戊' : chart.xunShouName === '甲戌' ? '己' : chart.xunShouName === '甲申' ? '庚' : chart.xunShouName === '甲午' ? '辛' : chart.xunShouName === '甲辰' ? '壬' : '癸'}」）</div>`;
+
+            // ── 第二部分：术语说明 ──
+            result += `<div class="section-title">🔍 先看这里（术语白话）</div>`;
+            result += `<div class="kv"><span class="term">日干</span>（${dayGan}）＝ 起局当天的天干，<span class="plain">代表失主，也就是您本人</span></div>`;
+            result += `<div class="kv"><span class="term">时干</span>（${timeGan}）＝ 起局时辰的天干，<span class="plain">代表丢失的物品</span></div>`;
+            result += `<div class="kv"><span class="term">落宫</span>＝ 该天干在九宫格中所落的位置，<span class="plain">对应一个方位和一组神/星/门</span></div>`;
+
+            // ── 第三部分：核心判断 ──
+            result += `<div class="section-title">📍 核心判断</div>`;
+            result += `<div class="kv">您（日干${dayGan}）→ <span class="highlight">${riPalaceName}</span></div>`;
+            result += `<div class="kv">失物（时干${timeGan}）→ <span class="highlight">${shiPalaceName}</span></div>`;
+            result += `<div class="kv">失物方位：<span class="highlight" style="font-size:1rem;">${direction}</span></div>`;
+            result += `<div class="kv">远近：${isInner ? '<span class="highlight">内盘</span>（近处，大概率在家中或附近）' : '<span class="highlight">外盘</span>（远处，可能丢在外面了）'}</div>`;
+            if (wuXiang) result += `<div class="kv">物品类象：${wuXiang}<span class="plain">（此为该宫的传统类象，供参考）</span></div>`;
+
+            // ── 第四部分：处境分析 ──
+            result += `<div class="section-title">🧐 处境分析</div>`;
+            let anyFlag = false;
+            if (isKong) {
+                result += `<div class="kv danger">⚠ 时干落空亡：<span class="plain">空亡代表"落空"，说明此物暂时难以寻回，或者根本不在你找的方向。</span></div>`;
+                anyFlag = true;
+            }
+            if (stolen) {
+                result += `<div class="kv warn">⚠ 临玄武或天蓬：<span class="plain">玄武主盗贼、天蓬亦主盗，暗示此物可能被人拿走，而非自己遗失。</span></div>`;
+                anyFlag = true;
+            }
+            if (god === '六合') { result += `<div class="kv">六合临宫：<span class="plain">六合主和合、中介，物品可能被人收着，或与多人有关，可托人打听。</span></div>`; anyFlag = true; }
+            if (god === '九地') { result += `<div class="kv">九地临宫：<span class="plain">九地主低处、隐藏，物品可能在低处、柜底、地下、或不易被发现的地方。</span></div>`; anyFlag = true; }
+            if (god === '九天') { result += `<div class="kv">九天临宫：<span class="plain">九天主高处、远扬，物品可能在高处、外面，或者已经远离。</span></div>`; anyFlag = true; }
+            if (god === '螣蛇') { result += `<div class="kv">螣蛇临宫：<span class="plain">螣蛇主缠绕、曲折，物品可能被卷着、缠着，或线索不清。</span></div>`; anyFlag = true; }
+            if (god === '太阴') { result += `<div class="kv">太阴临宫：<span class="plain">太阴主暗中、遮蔽，物品被遮住或藏在暗处，不容易一眼看到。</span></div>`; anyFlag = true; }
+            if (god === '白虎') { result += `<div class="kv">白虎临宫：<span class="plain">白虎主道路、刚硬，物品可能在路边、车上，或与金属有关。</span></div>`; anyFlag = true; }
+            if (god === '值符') { result += `<div class="kv">值符临宫：<span class="plain">值符为贵神，物品比较贵重，或有身份的人代为保管。</span></div>`; anyFlag = true; }
+            if (!anyFlag) {
+                result += `<div class="kv plain">此宫无明显凶象或特殊提示，可按下方方位去找。</div>`;
+            }
+
+            // ── 第五部分：生克关系 ──
+            const palaceWuXing = { 1:'水', 2:'土', 3:'木', 4:'木', 5:'土', 6:'金', 7:'金', 8:'土', 9:'火' };
+            const shengMap = { '木':'火', '火':'土', '土':'金', '金':'水', '水':'木' };
+            const keMap = { '木':'土', '土':'水', '水':'火', '火':'金', '金':'木' };
+            const shiWX = palaceWuXing[shiGanPalace];
+            const riWX = palaceWuXing[riGanPalace];
+
+            result += `<div class="section-title">⚖ 生克关系（物与人）</div>`;
+            result += `<div class="kv plain">时干宫五行：${shiWX} ｜ 日干宫五行：${riWX}</div>`;
+            if (shengMap[shiWX] === riWX) {
+                result += `<div class="kv"><span class="highlight">时干宫生日干宫</span>：<span class="plain">物来寻人，说明这物品还能回到你身边，寻回有望。</span></div>`;
+            } else if (keMap[shiWX] === riWX) {
+                result += `<div class="kv warn">时干宫克日干宫：<span class="plain">物克人，代表找起来费劲，需要多花点功夫。</span></div>`;
+            } else if (shengMap[riWX] === shiWX) {
+                result += `<div class="kv">日干宫生时干宫：<span class="plain">人生物，代表物品已远去，寻回难度较大。</span></div>`;
+            } else if (keMap[riWX] === shiWX) {
+                result += `<div class="kv">日干宫克时干宫：<span class="plain">人克物，主动去找还有机会，别放弃。</span></div>`;
+            } else {
+                result += `<div class="kv">日时宫比和：<span class="plain">人与物"势均力敌"，寻回机会一般，可往${direction}方向仔细找。</span></div>`;
+            }
+
+            // ── 第六部分：何时可寻 ──
+            result += `<div class="section-title">⏰ 何时可寻回</div>`;
+            const hasGeng = chart.skyStems[shiGanPalace] === '庚' || chart.skyStems[riGanPalace] === '庚'
+                         || chart.earthPan[shiGanPalace] === '庚' || chart.earthPan[riGanPalace] === '庚';
+            if (isKong) {
+                result += `<div class="kv">因为时干落空亡，应期一般在<span class="highlight">空亡填实</span>之时。<span class="plain">通俗讲，就是等到被空掉的那个地支日或月，例如甲子旬空戌亥，逢戌日或亥日便有机会。</span></div>`;
+            } else if (hasGeng) {
+                result += `<div class="kv">盘中出现<span class="term">庚</span>（庚主变革、转机），这叫"庚格"，<span class="plain">通常以庚日、庚时或庚月为应期，短期内可留意。</span></div>`;
+            } else {
+                result += `<div class="kv">可关注与「<span class="highlight">${timeGan}</span>」相关的日子或时辰：<span class="plain">例如${timeGan}日、${timeGan}时，或与${timeGan}相合的天干日时。</span></div>`;
+                result += `<div class="kv plain">同时留意地支「${chart.hgz.zhi}」日，也有参考意义。</div>`;
+            }
+
+            return result;
+        }
+
+        // ============================================================
+        // 射覆解读（白话版 + 修复bug）
+        // ============================================================
+
+        function interpretShefu(chart) {
+            // ⚠ 修复：先定义生克表，避免TDZ错误
+            const shengMap = { '木':'火', '火':'土', '土':'金', '金':'水', '水':'木' };
+            const keMap = { '木':'土', '土':'水', '水':'火', '火':'金', '金':'木' };
+            const palaceWuXing = { 1:'水', 2:'土', 3:'木', 4:'木', 5:'土', 6:'金', 7:'金', 8:'土', 9:'火' };
+
+            // 找值使门落宫
+            const zhishiDoor = chart.zhishiDoor;
+            let zhishiPalace = null;
+            for (const [p, door] of Object.entries(chart.skyDoors)) {
+                if (door === zhishiDoor) { zhishiPalace = parseInt(p); break; }
+            }
+            if (!zhishiPalace) zhishiPalace = 1;
+
+            const palaceName = PALACE_NAME[zhishiPalace] || zhishiPalace + '宫';
+            const god = chart.skyGods[zhishiPalace] || '';
+            const star = chart.skyStars[zhishiPalace] || '';
+            const stem = chart.skyStems[zhishiPalace] || '';
+            const door = chart.skyDoors[zhishiPalace] || zhishiDoor;
+            const earthStem = chart.earthPan[zhishiPalace] || '';
+
+            // 旺衰（按季节）
+            const month = chart.date.getMonth() + 1;
+            let seasonWX, seasonName;
+            if (month >= 3 && month <= 5) { seasonWX = '木'; seasonName = '春'; }
+            else if (month >= 6 && month <= 8) { seasonWX = '火'; seasonName = '夏'; }
+            else if (month >= 9 && month <= 11) { seasonWX = '金'; seasonName = '秋'; }
+            else { seasonWX = '水'; seasonName = '冬'; }
+
+            const wx = palaceWuXing[zhishiPalace];
+            let wangShuai;
+            if (wx === seasonWX) wangShuai = '旺';
+            else if (shengMap[seasonWX] === wx) wangShuai = '相';
+            else if (shengMap[wx] === seasonWX) wangShuai = '休';
+            else if (keMap[seasonWX] === wx) wangShuai = '囚';
+            else wangShuai = '死';
+
+            const wangShuaiPlain = {
+                '旺': '当令最强，物有生气、新鲜完整',
+                '相': '次强，物较有活力，完整度好',
+                '休': '退气，物已不新，力弱',
+                '囚': '被克受困，物有破损或受压制',
+                '死': '无气最弱，物已废旧无用'
+            };
+
+            const isLiving = ['旺','相'].includes(wangShuai);
+            const isDead = ['休','囚','死'].includes(wangShuai);
+
+            // 形态
+            let shape = '';
+            if (wangShuai === '旺') shape = '圆而软';
+            else if (wangShuai === '相') shape = '方而嫩';
+            else if (wangShuai === '死') shape = '直硬破碎';
+            else if (wangShuai === '囚') shape = '细碎';
+            else shape = '体轻不全';
+
+            let xinJiu = ['旺','相'].includes(wangShuai) ? '新而完整' : '旧而残缺';
+
+            // 类象表
+            const baguaXiang = {
+                1: '坎为水，主酒食、海味、有蒂核之物，色黑白',
+                2: '坤为地，主土中物、方形物，色黄',
+                3: '震为雷，主动物、草木、弯绕物，色青绿',
+                4: '巽为风，主细长物、花草、线状物，色青',
+                6: '乾为天，主金玉、圆物、珠玉、金银，色白',
+                7: '兑为泽，主口、有口之物、金银首饰，色白',
+                8: '艮为山，主土石、坚硬物、果核，色黄白',
+                9: '离为火，主文明、图书、字画、红色物，色赤'
+            };
+
+            let result = '';
+
+            // ── 第一部分：起局信息 ──
+            result += `<div class="section-title">📋 起局信息</div>`;
+            result += `<div class="kv">节气：<span class="highlight">${chart.jqName}</span> · ${chart.dun}遁 <span class="highlight">${chart.ju}局</span></div>`;
+            result += `<div class="kv">时间：${chart.dgz.gan}${chart.dgz.zhi}日 ${chart.hgz.gan}${chart.hgz.zhi}时</div>`;
+
+            // ── 第二部分：术语说明 ──
+            result += `<div class="section-title">🔍 先看这里（术语白话）</div>`;
+            result += `<div class="kv"><span class="term">射覆</span>：<span class="plain">古代猜物游戏，把物品盖住让人猜。奇门中主要通过盘面符号推断物品特征。</span></div>`;
+            result += `<div class="kv"><span class="term">值使门</span>：<span class="plain">盘中最关键的那一扇门，代表事物的主要性质。</span></div>`;
+            result += `<div class="kv"><span class="term">落宫</span>：<span class="plain">值使门落在九宫格的哪个位置，就主要看那个宫里的信息。</span></div>`;
+
+            // ── 第三部分：核心定位 ──
+            result += `<div class="section-title">🎯 核心定位</div>`;
+            result += `<div class="kv">值使门：<span class="highlight">${zhishiDoor}</span>（${DOOR_GLOSS[zhishiDoor] || ''}）</div>`;
+            result += `<div class="kv">落宫：<span class="highlight">${palaceName}</span></div>`;
+
+            // ── 第四部分：四大取象 ──
+            result += `<div class="section-title">🔎 四大取象（推断物品特征）</div>`;
+            result += `<div class="kv"><span class="term">① 八门</span>（看性质/功能）：${door} → ${DOOR_DESC[door] || ''}</div>`;
+            if (star) result += `<div class="kv"><span class="term">② 九星</span>（看气质/天分）：${star} → ${STAR_DESC[star] || ''}</div>`;
+            if (god) result += `<div class="kv"><span class="term">③ 八神</span>（看隐秘属性）：${god} → ${GOD_DESC[god] || ''}</div>`;
+            if (stem) result += `<div class="kv"><span class="term">④ 天干</span>（看具体特征）：${stem} → ${STEM_DESC[stem] || ''}</div>`;
+            if (earthStem && earthStem !== stem) {
+                result += `<div class="kv plain">（地盘干为 ${earthStem}，参考：${STEM_DESC[earthStem] || ''}）</div>`;
+            }
+            result += `<div class="kv plain">八卦方位：${baguaXiang[zhishiPalace] || ''}</div>`;
+
+            // ── 第五部分：形态性质 ──
+            result += `<div class="section-title">📐 形态性质</div>`;
+            result += `<div class="kv">旺衰：<span class="highlight">${wangShuai}</span>（${seasonName}季，宫五行${wx}）</div>`;
+            result += `<div class="kv plain">${wangShuaiPlain[wangShuai]}</div>`;
+            result += `<div class="kv">形态：${shape}</div>`;
+            result += `<div class="kv">新旧：${xinJiu}</div>`;
+            if (isLiving) {
+                result += `<div class="kv">活物 / 死物：<span class="highlight">偏活物</span>（有生气，可能是动植物、能生长之物）</div>`;
+            } else if (isDead) {
+                result += `<div class="kv">活物 / 死物：<span class="highlight">偏死物</span>（无生气，多为器物、矿物、加工品）</div>`;
+            } else {
+                result += `<div class="kv">活物 / 死物：性质不明，需结合其他信息</div>`;
+            }
+
+            // ── 第六部分：综合推断 ──
+            result += `<div class="section-title">💡 综合推断（白话总结）</div>`;
+            result += `<div class="kv">此物性质为「${DOOR_GLOSS[door] || door}」，气质偏「${STAR_GLOSS[star] || star}」，隐秘属性为「${GOD_GLOSS[god] || god}」。</div>`;
+            result += `<div class="kv">结合方位（${baguaXiang[zhishiPalace] || ''}），可以重点考虑以下特征：</div>`;
+            result += `<div class="kv">· ${STEM_DESC[stem] || ''}</div>`;
+            if (earthStem && earthStem !== stem) {
+                result += `<div class="kv">· ${STEM_DESC[earthStem] || ''}</div>`;
+            }
+            if (isLiving) {
+                result += `<div class="kv">· 因为旺相，此物可能是活的，或者是有生机、能变化的物品。</div>`;
+            } else {
+                result += `<div class="kv">· 因为休囚死，此物多半是死物、加工品或旧物。</div>`;
+            }
+            result += `<div class="kv plain" style="margin-top:8px;">提示：射覆需结合具体情境与灵感，以上类象供参考，不必死板套用。</div>`;
+
+            return result;
+        }
+
+        // ============================================================
+        // 全局状态与事件
+        // ============================================================
+
+        let currentMode = 'lost';
+        let useRandom = false;
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                currentMode = this.dataset.mode;
+            });
+        });
+
+        document.getElementById('btnTime').addEventListener('click', function() {
+            useRandom = false;
+            document.getElementById('timeRow').style.display = 'flex';
+            document.getElementById('randomRow').style.display = 'none';
+            this.style.opacity = '1';
+            this.style.background = '#20c997';
+            this.style.color = '#0a0f14';
+            document.getElementById('btnRandom').style.opacity = '0.6';
+            document.getElementById('btnRandom').style.background = '#16222c';
+            document.getElementById('btnRandom').style.color = '#7a8c9e';
+        });
+
+        document.getElementById('btnRandom').addEventListener('click', function() {
+            useRandom = true;
+            document.getElementById('timeRow').style.display = 'none';
+            document.getElementById('randomRow').style.display = 'flex';
+            this.style.opacity = '1';
+            this.style.background = '#20c997';
+            this.style.color = '#0a0f14';
+            document.getElementById('btnTime').style.opacity = '0.6';
+            document.getElementById('btnTime').style.background = '#16222c';
+            document.getElementById('btnTime').style.color = '#7a8c9e';
+        });
+
+        document.getElementById('btnRandomGen').addEventListener('click', function() {
+            document.getElementById('randomInput').value = Math.floor(Math.random() * 100) + 1;
+        });
+
+        // 初始化时间
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        const timeStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:00`;
+        document.getElementById('timeInput').value = timeStr;
+
+        document.getElementById('btnPaipan').addEventListener('click', function() {
+            let date;
+            if (useRandom) {
+                const num = parseInt(document.getElementById('randomInput').value) || 1;
+                date = new Date();
+                date.setHours(date.getHours() + (num % 24));
+            } else {
+                const val = document.getElementById('timeInput').value;
+                if (!val) { alert('请选择时间'); return; }
+                date = new Date(val);
+            }
+
+            const chart = paipan(date);
+            renderPan(chart);
+
+            let resultHtml;
+            try {
+                if (currentMode === 'lost') {
+                    resultHtml = interpretLost(chart);
+                } else {
+                    resultHtml = interpretShefu(chart);
+                }
+            } catch (e) {
+                console.error(e);
+                resultHtml = `<div class="section-title">⚠ 解读出错</div><div class="kv">请刷新页面后重试。错误信息：${e.message}</div>`;
+            }
+
+            const box = document.getElementById('resultBox');
+            box.innerHTML = resultHtml;
+            box.classList.add('show');
+        });
+
+        // 初始排一局
+        document.getElementById('btnPaipan').click();
+    </script>
+</body>
+</html>
